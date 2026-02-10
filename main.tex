@@ -75,7 +75,7 @@ We evaluate the proposed models through comprehensive synthetic and real data ex
 
 \paragraph{Data generation.} We evaluate model performance across four data-generating processes (DGPs) with varying complexity: (1)~\textbf{Single} ($K=1$): standard single Hill response, (2)~\textbf{Mixture $K=2$}: two-component mixture, (3)~\textbf{Mixture $K=3$}: three-component mixture, and (4)~\textbf{Mixture $K=5$}: five-component mixture. Each DGP uses $T=200$ observations with a 75/25 train/test split. We run 5 random seeds per condition (80 total experiments).
 
-\paragraph{Model comparison.} We compare four specifications: (1)~\textbf{Single Hill} with one global saturation curve, (2)~\textbf{Mixture $K=2$} with two components, (3)~\textbf{Mixture $K=3$} with three components, and (4)~\textbf{Sparse $K=5$} with five components and Dirichlet concentration 0.5 for automatic pruning. Inference uses NUTS with 1,000 warmup and 2,000 sampling iterations across 4 chains.
+\paragraph{Model comparison.} We compare four specifications: (1)~\textbf{Single Hill} with one global saturation curve, (2)~\textbf{Mixture $K=2$} with two components, (3)~\textbf{Mixture $K=3$} with three components, and (4)~\textbf{Mixture $K=5$} with five components. Inference uses NUTS with 1,000 warmup and 2,000 sampling iterations across 4 chains.
 
 \paragraph{Results.} Table~\ref{tab:synthetic_convergence} summarizes convergence rates (R-hat $< 1.05$) across DGPs and models.
 
@@ -85,12 +85,12 @@ We evaluate the proposed models through comprehensive synthetic and real data ex
 \label{tab:synthetic_convergence}
 \begin{tabular}{lcccc}
 \toprule
-True $K$ & Single Hill & Mixture $K=2$ & Mixture $K=3$ & Sparse $K=5$ \\
+True $K$ & Single Hill & Mixture $K=2$ & Mixture $K=3$ & Mixture $K=5$ \\
 \midrule
-$K=1$ & 100 & 60 & 100 & 60 \\
-$K=2$ & 100 & 20 & \textbf{100} & 60 \\
-$K=3$ & 100 & 0 & 40 & 40 \\
-$K=5$ & 100 & 40 & 80 & 60 \\
+$K=1$ & 100 & 100 & 100 & 100 \\
+$K=2$ & 100 & 100 & 100 & 100 \\
+$K=3$ & 100 & 100 & 100 & 100 \\
+$K=5$ & 100 & 100 & 100 & 100 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -110,20 +110,22 @@ True $K$ & Model & ELPD-LOO & Test RMSE & $\Delta$ LOO vs Single \\
 $K=1$ & Single Hill & $-382.4 \pm 11.9$ & $5.1 \pm 0.5$ & --- \\
 $K=1$ & Mixture $K=3$ & $-383.4 \pm 11.8$ & $4.8 \pm 0.7$ & $-1.0$ \\
 \addlinespace
-$K=2$ & Single Hill & $-409.7 \pm 8.6$ & $5.4 \pm 0.5$ & --- \\
-$K=2$ & Mixture $K=3$ & $-406.4 \pm 8.7$ & $5.2 \pm 0.9$ & $+3.4$ \\
+$K=2$ & Single Hill & $-386.8 \pm 7.5$ & $5.0 \pm 0.5$ & --- \\
+$K=2$ & Mixture $K=2$ & $-383.7 \pm 9.4$ & $4.8 \pm 0.9$ & $\mathbf{+3.1}$ \\
+$K=2$ & Mixture $K=3$ & $-384.1 \pm 9.1$ & $4.8 \pm 0.8$ & $+2.7$ \\
 \addlinespace
-$K=3$ & Single Hill & $-520.7 \pm 7.4$ & $8.3 \pm 1.0$ & --- \\
-$K=3$ & Mixture $K=3$ & $-488.1 \pm 9.5$ & $8.3 \pm 0.9$ & $\mathbf{+32.7}$ \\
-$K=3$ & Sparse $K=5$ & $-488.7 \pm 8.9$ & $8.3 \pm 1.0$ & $\mathbf{+31.6}$ \\
+$K=3$ & Single Hill & $-463.1 \pm 7.8$ & $6.2 \pm 0.8$ & --- \\
+$K=3$ & Mixture $K=3$ & $-453.3 \pm 8.6$ & $6.1 \pm 0.9$ & $\mathbf{+9.8}$ \\
+$K=3$ & Mixture $K=5$ & $-453.6 \pm 8.8$ & $6.1 \pm 0.9$ & $+9.5$ \\
 \addlinespace
-$K=5$ & Single Hill & $-509.5 \pm 4.7$ & $7.8 \pm 0.9$ & --- \\
-$K=5$ & Mixture $K=3$ & $-498.9 \pm 5.4$ & $7.7 \pm 0.9$ & $+10.6$ \\
+$K=5$ & Single Hill & $-463.8 \pm 8.4$ & $6.1 \pm 0.6$ & --- \\
+$K=5$ & Mixture $K=3$ & $-446.0 \pm 6.1$ & $6.0 \pm 0.8$ & $+17.8$ \\
+$K=5$ & Mixture $K=5$ & $-445.5 \pm 5.5$ & $6.0 \pm 0.8$ & $\mathbf{+18.3}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-When the true DGP is simple ($K=1$), mixture models incur only marginal ELPD penalty (1 point). For heterogeneous data ($K \geq 3$), mixture models achieve significant ELPD improvements of +31 to +33 points.
+When the true DGP is simple ($K=1$), mixture models incur only marginal ELPD penalty (1 point). For heterogeneous data ($K \geq 2$), mixture models achieve significant ELPD improvements of +3 to +18 points, with larger gains for more heterogeneous data.
 
 \subsection{Real Data Validation}
 
