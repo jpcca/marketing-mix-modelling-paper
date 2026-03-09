@@ -13,6 +13,8 @@ header-includes:
   - \usepackage{booktabs}
 ---
 
+> Note: `main.tex` is the canonical manuscript. This Markdown file is a legacy draft kept for reference and may not match the latest benchmark results or paper structure.
+
 # 1. Introduction
 
 Marketing Mix Modeling (MMM) enables organizations to quantify the effectiveness of marketing investments and optimize budget allocation. Modern implementations typically employ Hill saturation functions to capture diminishing returns and geometric decay adstock transformations to model carryover effects [@jin2017bayesian; @chan2017challenges].

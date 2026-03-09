@@ -11,14 +11,14 @@
 
 \title{Bayesian Hill Mixture Models for Heterogeneous Consumer Response in Marketing Mix Modeling}
 \author{Shohei Yoshida, Grisha Szep, Mizuki Oka}
-\date{February 2026}
+\date{March 2026}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Marketing Mix Models (MMM) are widely used for measuring advertising effectiveness, yet standard implementations assume homogeneous consumer response to marketing spend. This paper proposes a Bayesian mixture of Hill saturation functions to capture heterogeneous response patterns across latent consumer segments---a fundamental capability that single-curve models cannot provide. We implement the approach using NumPyro with automatic prior scaling and develop post-hoc relabeling diagnostics to address label switching in mixture posteriors. Comprehensive experiments on synthetic data (80 configurations) and real marketing data from 10 organizations (90 experiments) demonstrate that mixture models consistently outperform single-curve baselines: achieving ELPD improvements of +21 to +1,329 when heterogeneity is present while incurring minimal penalty ($-1$ ELPD) on homogeneous data. The choice of mixture components ($K$) represents a data-dependent trade-off: larger $K$ provides better predictive performance while smaller $K$ offers more reliable convergence. Our post-hoc relabeling approach raises practical convergence rates from 7\% to 43\% for $K=2$ mixtures on real data. We provide implementation guidance for practitioners adopting mixture-based MMM.
+Marketing Mix Models (MMM) are widely used for measuring advertising effectiveness, yet standard implementations assume homogeneous consumer response to marketing spend. This paper proposes a Bayesian mixture of Hill saturation functions to capture heterogeneous response patterns across latent consumer segments---a capability that single-curve models do not provide. We implement the approach in NumPyro with automatic prior scaling and label-invariant convergence diagnostics with post-hoc relabeling. Our confirmatory evidence comes from a calibrated synthetic benchmark of 80 runs across four data-generating processes. When the true response is homogeneous, the single-Hill baseline remains best and mixture models incur only a small ELPD penalty (about 1 point). When heterogeneity is present, the matched mixture improves ELPD by roughly +3, +10, and +18 for true $K=2,3,5$ respectively. We evaluate holdout predictions sequentially, preserving both adstock state and absolute time index across the train/test split, and find that mixture gains are strongest in predictive density while RMSE differences remain smaller. Real-data experiments are currently treated as exploratory because data selection and preprocessing are still under refinement. We provide practical guidance for using mixture-based MMM as a controlled benchmark for heterogeneous saturation effects.
 \end{abstract}
 
 \noindent\textbf{Keywords:} Marketing Mix Modeling, Bayesian inference, Hill function, mixture models, label switching
@@ -31,7 +31,7 @@ A critical limitation of Standard MMM is its assumption that all consumers respo
 
 This paper proposes \emph{Mixture MMM}: a Bayesian mixture of Hill saturation functions that captures heterogeneous consumer response across latent segments. The key insight is that mixture models---regardless of the specific number of components---provide a principled framework for modeling response heterogeneity that Standard MMM cannot capture. While the optimal number of mixture components $K$ depends on dataset characteristics, the fundamental advantage of the mixture approach is consistent: the ability to identify and quantify distinct response patterns within the consumer population.
 
-We implement Mixture MMM using NumPyro \citep{phan2019composable} with JAX acceleration, which recent benchmarks show achieves 2--20x faster sampling than TensorFlow-based alternatives while maintaining superior channel contribution recovery \citep{pymc2025benchmark}. A key methodological contribution is our treatment of label switching in mixture posteriors. Standard convergence diagnostics (R-hat) are unreliable for mixture models because component labels may exchange across MCMC chains. We develop post-hoc relabeling based on component ordering and demonstrate that this approach substantially improves diagnostic reliability.
+We implement Mixture MMM using NumPyro \citep{phan2019composable} with JAX acceleration, which recent benchmarks show achieves 2--20x faster sampling than TensorFlow-based alternatives while maintaining superior channel contribution recovery \citep{pymc2025benchmark}. A key methodological contribution is our treatment of label switching in mixture posteriors. Standard convergence diagnostics (R-hat) are unreliable for mixture models because component labels may exchange across MCMC chains. We develop post-hoc relabeling and label-invariant diagnostics to make mixture benchmarks interpretable. In this version of the paper, we ground our empirical claims primarily in synthetic experiments with known truth; real-data checks are reported only as exploratory evidence while data curation and preprocessing are still being standardized.
 
 \section{Model Specification}
 
@@ -69,7 +69,7 @@ Mixture models suffer from label switching, where posterior samples may exchange
 
 \section{Experiments}
 
-We evaluate the proposed models through comprehensive synthetic and real data experiments.
+We evaluate the proposed models primarily through synthetic experiments with known ground truth. Real-data checks are retained only as exploratory diagnostics in the current draft.
 
 \subsection{Synthetic Data Experiments}
 
@@ -77,25 +77,9 @@ We evaluate the proposed models through comprehensive synthetic and real data ex
 
 \paragraph{Model comparison.} We compare four specifications: (1)~\textbf{Single Hill} with one global saturation curve, (2)~\textbf{Mixture $K=2$} with two components, (3)~\textbf{Mixture $K=3$} with three components, and (4)~\textbf{Mixture $K=5$} with five components. Inference uses NUTS with 1,000 warmup and 2,000 sampling iterations across 4 chains.
 
-\paragraph{Results.} Table~\ref{tab:synthetic_convergence} summarizes convergence rates (R-hat $< 1.05$) across DGPs and models.
+\paragraph{Evaluation protocol.} Holdout predictions are generated sequentially: the test period inherits the adstock state accumulated during training and is evaluated at its absolute time index rather than being re-indexed to start at zero. This avoids an artificial reset of carryover and trend at the train/test boundary. We report ELPD-LOO as the primary predictive metric, with test RMSE and posterior latent-mean recovery as secondary checks.
 
-\begin{table}[ht]
-\centering
-\caption{Convergence rates (\%) for synthetic data experiments. Each cell shows the percentage of 5 seeds that achieved R-hat $< 1.05$.}
-\label{tab:synthetic_convergence}
-\begin{tabular}{lcccc}
-\toprule
-True $K$ & Single Hill & Mixture $K=2$ & Mixture $K=3$ & Mixture $K=5$ \\
-\midrule
-$K=1$ & 100 & 100 & 100 & 100 \\
-$K=2$ & 100 & 100 & 100 & 100 \\
-$K=3$ & 100 & 100 & 100 & 100 \\
-$K=5$ & 100 & 100 & 100 & 100 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Key findings: (1) Single Hill always converges but cannot capture heterogeneous consumer response patterns---a fundamental limitation of standard MMM. (2) Mixture models successfully capture heterogeneity when present, with convergence rates depending on model complexity and data characteristics. (3) The choice of $K$ represents a practical trade-off: smaller $K$ offers better convergence while larger $K$ captures more complex heterogeneity patterns.
+\paragraph{Results.} All 80 synthetic runs satisfied the effective convergence criterion. For single-Hill fits we require standard R-hat $< 1.05$; for mixture fits we require both label-invariant and relabeled diagnostics to satisfy the stricter $\widehat{R} < 1.01$ threshold.
 
 Table~\ref{tab:synthetic_elpd} shows predictive performance for converged runs.
 
@@ -125,75 +109,50 @@ $K=5$ & Mixture $K=5$ & $-445.5 \pm 5.5$ & $6.0 \pm 0.8$ & $\mathbf{+18.3}$ \\
 \end{tabular}
 \end{table}
 
-When the true DGP is simple ($K=1$), mixture models incur only marginal ELPD penalty (1 point). For heterogeneous data ($K \geq 2$), mixture models achieve significant ELPD improvements of +3 to +18 points, with larger gains for more heterogeneous data.
+When the true DGP is simple ($K=1$), mixture models incur only a marginal ELPD penalty. For heterogeneous data ($K \geq 2$), the mixture family becomes decisively better, and the gain increases with true complexity. The strongest improvements appear in ELPD rather than RMSE, which suggests that mixture models primarily improve probabilistic calibration rather than only point prediction.
 
-\subsection{Real Data Validation}
+The synthetic benchmark also exposes a useful model-selection pattern. The mixture model with the correct $K$ tends to win on ELPD, but modest over-specification remains competitive because excess components are only partially used. This is encouraging for practice: slight over-specification appears less harmful than enforcing a single saturation curve when the truth is heterogeneous.
 
-We evaluate the models on real marketing data from the Conjura MMM dataset, comprising weekly spend and revenue data from 10 organizations selected by data availability (largest time series lengths of 1,415--1,751 observations).
+\subsection{Exploratory Real-Data Check}
 
-\paragraph{Experimental setup.} For each organization, we compare Single Hill, Mixture $K=2$, and Mixture $K=3$ with 3 random seeds per configuration (90 total experiments). MCMC uses 2,000 warmup and 2,000 sampling iterations across 4 chains. Data is split 75/25 for train/test.
-
-\paragraph{Results.} Table~\ref{tab:real_convergence} summarizes convergence rates.
-
-\begin{table}[ht]
-\centering
-\caption{Convergence rates for real data experiments (10 orgs $\times$ 3 seeds = 30 per model).}
-\label{tab:real_convergence}
-\begin{tabular}{lccc}
-\toprule
-Model & Standard R-hat & Relabeled R-hat & ELPD (median) \\
-\midrule
-Single Hill & 7/30 (23\%) & --- & $-6{,}300$ \\
-Mixture $K=2$ & 2/30 (7\%) & \textbf{13/30 (43\%)} & $-5{,}889$ \\
-Mixture $K=3$ & 0/30 (0\%) & 0/30 (0\%) & $-5{,}837$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{Relabeled R-hat effectiveness.} Post-hoc relabeling dramatically improves diagnostic reliability for $K=2$ mixtures: convergence assessment increases from 7\% to 43\%. For $K=3$, relabeling provides no benefit---R-hat remains 2.1--4.3 even after relabeling, suggesting fundamental identifiability issues rather than label switching.
-
-Figure~\ref{fig:real_elpd} shows the distribution of ELPD improvements over Single Hill across organizations. All 10 organizations show improvement, ranging from +21 to +1,329 ELPD.
-
-\paragraph{Pareto-k diagnostics.} Leave-one-out cross-validation quality varies substantially across models. Single Hill has 238 observations with Pareto-k $> 0.7$ (problematic), Mixture $K=2$ has 1,182, while Mixture $K=3$ has only 146. The high Pareto-k count for $K=2$ reflects numerical instability when chains have not converged.
+We retain a preliminary real-data benchmark on the Conjura MMM dataset only as an exploratory check. At the current stage, organization selection, preprocessing, and covariate construction are still under refinement, and many runs exhibit poor PSIS-LOO diagnostics and strong seed sensitivity. We therefore do not use the real-data results as confirmatory evidence in this paper. Their present role is limited to stress-testing the implementation and identifying the next methodological bottlenecks for future work.
 
 \section{Discussion}
 
-Our experiments demonstrate that mixture models consistently outperform standard single-curve MMM when consumer heterogeneity is present, while incurring minimal penalty when populations are homogeneous.
+The synthetic benchmark establishes a clean and asymmetric result: the single-Hill model is preferred when the data are truly homogeneous, but the penalty for fitting a small mixture is minor; when heterogeneity is present, the single-curve restriction becomes clearly suboptimal and mixture models gain predictive density rapidly as true complexity increases.
 
-\paragraph{Standard MMM vs Mixture Models.} The central finding is that mixture models provide substantial predictive improvements over standard MMM (+21 to +1,329 ELPD on real data), validating that consumer response heterogeneity is widespread and consequential. The choice of component number $K$ affects the magnitude of improvement and convergence properties, but the fundamental advantage of the mixture approach---capturing heterogeneous response patterns---is consistent across specifications.
+\paragraph{Standard MMM vs Mixture Models.} The central finding is therefore not that one fixed $K$ dominates everywhere, but that the mixture family is the correct modeling language once heterogeneous saturation is plausible. In the current benchmark, the correct-$K$ mixture typically wins on ELPD, while simpler or slightly over-specified mixtures often remain close. Standard MMM remains a strong baseline for homogeneous settings, but it cannot represent multi-segment response curves.
 
-\paragraph{Component selection trade-offs.} Among mixture variants, $K=3$ achieves the best ELPD on both synthetic and real data (winning on 9/10 organizations), while $K=2$ offers better convergence (43\% with relabeled diagnostics vs 0\% for $K=3$). For practitioners requiring reliable uncertainty quantification, $K=2$ with relabeling is recommended; for exploratory analysis prioritizing predictive accuracy, $K=3$ with cautious posterior interpretation may be preferred.
+\paragraph{Component selection trade-offs.} The choice of $K$ is best understood as a trade-off between expressiveness and simplicity. Larger $K$ helps when the DGP is genuinely heterogeneous, especially in predictive density, but the incremental benefit in RMSE is smaller. This suggests that additional components mostly improve uncertainty quantification and distributional fit rather than only mean prediction.
 
-\paragraph{Why $K=3$ fails to converge.} The $K=3$ model exhibits zero label switching (switching rate = 0.0), suggesting that components either collapse or fail to mix rather than switch labels. This is consistent with weak identifiability: with three components, the parameter space has multiple equivalent regions that MCMC cannot efficiently explore. The problem is exacerbated in real data where the true number of segments is unknown.
-
-\paragraph{Relabeling as a diagnostic tool.} Our relabeling approach serves dual purposes: (1) enabling meaningful R-hat computation on component parameters, and (2) diagnosing whether non-convergence stems from label switching or fundamental mixing problems. When relabeling improves R-hat (as for $K=2$), the issue was label switching. When relabeling has no effect (as for $K=3$), the model has deeper convergence issues.
+\paragraph{Relabeling as a diagnostic tool.} Post-hoc relabeling remains important even in a synthetic suite with strong convergence. Its main value is not to manufacture convergence, but to keep diagnostics interpretable and to separate genuine non-identifiability from label permutations. For mixture MMM, reporting only parameter-level R-hat without a label-invariant check is not sufficient.
 
 \paragraph{When to use Standard vs Mixture MMM.} The choice between standard and mixture models depends on the application context and data characteristics:
 \begin{itemize}
-    \item \textbf{Standard MMM} is appropriate when (a) consumer response is expected to be homogeneous, (b) reliable convergence is paramount (100\% in our experiments), (c) computational resources are limited, or (d) model interpretability is prioritized.
-    \item \textbf{Mixture MMM} is appropriate when (a) evidence suggests heterogeneous consumer segments, (b) predictive accuracy is prioritized over convergence guarantees, or (c) understanding segment-specific response patterns is valuable.
+    \item \textbf{Standard MMM} is appropriate when (a) consumer response is plausibly homogeneous, (b) a single interpretable curve is preferred, or (c) the application does not justify mixture complexity.
+    \item \textbf{Mixture MMM} is appropriate when (a) heterogeneous saturation is substantively plausible, (b) predictive density and uncertainty quantification matter, or (c) segment-specific response curves are part of the scientific question.
 \end{itemize}
-Our experiments suggest mixture models incur minimal penalty ($-1$ ELPD) when heterogeneity is absent, but practitioners should weigh this against the convergence and interpretability advantages of standard MMM.
+Our experiments suggest that small mixtures incur only modest penalty when heterogeneity is absent, but practitioners should still weigh that robustness against the simpler interpretation of a single-curve model.
 
 \paragraph{Practical recommendations for mixture models.}
 \begin{enumerate}
-    \item For exploratory analysis prioritizing predictive accuracy: use Mixture $K=3$ but interpret posteriors cautiously.
-    \item For production systems requiring reliable uncertainty: use Mixture $K=2$ with relabeled R-hat diagnostics.
-    \item Always report both standard and relabeled R-hat for mixture models.
-    \item Consider the switching rate as a diagnostic: high rates (0.3--0.5) indicate active label switching; zero rates suggest identifiability problems.
+    \item Start with Single Hill and Mixture $K=2$ as the minimum comparison set.
+    \item Escalate to larger $K$ only when predictive-density gains justify the additional complexity.
+    \item Always evaluate holdout predictions sequentially, preserving adstock state and absolute time index across the split.
+    \item Always report label-invariant and relabeled diagnostics for mixture models.
 \end{enumerate}
 
-\paragraph{Limitations.} Our approach assumes segment membership is constant over time, which may not hold during product launches or competitive shifts. The mixture structure increases computational cost compared to single-curve models. Real data experiments used only 10 organizations from a single dataset; broader validation is needed.
+\paragraph{Limitations.} Our approach assumes segment membership is constant over time, which may not hold during product launches or competitive shifts. The current synthetic suite is deliberately in-model and single-channel, so it does not yet probe robustness to misspecification, multiple media channels, or aggressive prior mismatch. The mixture structure also increases computational cost compared to single-curve models. Finally, the real-data benchmark is still exploratory; stronger claims will require more disciplined preprocessing and broader external validation.
 
 \section{Conclusion}
 
 We presented a Bayesian mixture of Hill saturation functions as an alternative to standard single-curve Marketing Mix Models. Our central finding is that mixture models offer a principled approach to capturing heterogeneous consumer response---a capability fundamentally absent from traditional MMM implementations.
 
-The experimental evidence demonstrates that mixture models achieve substantial improvements (+21 to +1,329 ELPD) over single-curve baselines when consumer heterogeneity is present, while incurring minimal penalty ($-1$ ELPD) when the population is homogeneous. This asymmetric risk profile makes mixture models a robust default choice for practitioners uncertain about the degree of heterogeneity in their data.
+In a controlled synthetic benchmark, mixture models improve ELPD whenever the true response is heterogeneous, with gains that grow with latent complexity, while paying only a small penalty when the population is homogeneous. This makes the mixture formulation a credible benchmark for studying heterogeneous saturation effects under known ground truth.
 
-Our methodological contribution---post-hoc relabeling for mixture convergence diagnostics---addresses a key practical barrier to mixture model adoption. By raising convergence rates from 7\% to 43\% on real data, this simple technique makes the mixture approach viable for production use.
+Our methodological contribution---label-invariant diagnostics with post-hoc relabeling and sequential holdout evaluation---addresses two practical barriers to studying mixture MMMs: interpreting convergence and evaluating out-of-sample predictions without resetting latent state. These details matter because they determine whether predictive comparisons are scientifically meaningful.
 
-The choice of mixture complexity ($K$) should be guided by data characteristics and application requirements: larger $K$ captures more complex heterogeneity patterns but faces convergence challenges, while smaller $K$ offers reliability at the cost of some expressiveness. Rather than prescribing a single ``best'' $K$, we recommend practitioners evaluate multiple specifications and use convergence diagnostics to guide model selection.
+The choice of mixture complexity ($K$) should be guided by data characteristics and application requirements. Larger $K$ captures richer heterogeneity, but the main benefit appears first in predictive density rather than RMSE. Rather than prescribing a single ``best'' $K$, we recommend practitioners compare a small set of models, monitor label-invariant diagnostics, and treat current real-data evidence as exploratory until data preparation is better standardized.
 
 Implementation in NumPyro with automatic prior scaling and comprehensive diagnostics provides a practical tool for practitioners. Code and data are available at \url{https://github.com/jpcca/marketing-mix-modelling}.
 

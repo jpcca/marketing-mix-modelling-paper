@@ -10,31 +10,32 @@ Standard Marketing Mix Models assume all consumers respond identically to market
 
 - **Segment heterogeneity**: Different consumer groups (heavy vs. light buyers, loyalists vs. switchers) exhibit different saturation curves
 - **Model misspecification**: Aggregate response curves mask segment-specific behaviors
-- **Identifiability**: Ordered constraints prevent label switching in mixture posteriors
+- **Identifiability**: Label-invariant diagnostics and post-hoc relabeling make mixture posteriors interpretable
 
 ## Key Contributions
 
 1. **Bayesian mixture framework** combining Hill saturation with latent segment membership
 2. **Automatic prior scaling** from training data for diverse scales
-3. **Sparse Dirichlet priors** for automatic component pruning
-4. **NumPyro/JAX implementation** achieving 2-20x faster sampling than TensorFlow alternatives
+3. **Sequential holdout evaluation** that preserves adstock state and absolute time index
+4. **NumPyro/JAX implementation** for practical Bayesian inference
 
 ## Relationship to Code
 
 | Paper Section | Implementation |
 |---------------|----------------|
-| Model Specification (§2) | `../hill_mixture_mmm.py` - `model_hill_mixture_v3()` |
-| Data Generation (§3) | `../hill_mixture_mmm.py` - `generate_data_gmm_hill()` |
-| Single Hill baseline | `../hill_mixture_mmm.py` - `model_single_hill_v3()` |
-| Sparse mixture | `../hill_mixture_mmm.py` - `model_hill_mixture_sparse()` |
+| Model Specification (§2) | `../src/hill_mixture_mmm/models.py` |
+| Data Generation (§3) | `../src/hill_mixture_mmm/data.py` |
+| Inference and diagnostics | `../src/hill_mixture_mmm/inference.py` |
+| Benchmarking | `../scripts/run_benchmark.py` |
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `hill_mixture_mmm_paper.md` | Paper source (Markdown + YAML frontmatter) |
+| `main.tex` | Canonical manuscript source |
+| `hill_mixture_mmm_paper.md` | Legacy Markdown draft retained for reference |
 | `references.bib` | BibTeX bibliography |
-| `hill_mixture_mmm_paper.pdf` | Compiled output |
+| `main.pdf` | Compiled output (when built locally) |
 
 ## Compilation
 
@@ -45,4 +46,4 @@ Standard Marketing Mix Models assume all consumers respond identically to market
 
 ### Build PDF
 
-    pandoc hill_mixture_mmm_paper.md -o hill_mixture_mmm_paper.pdf --pdf-engine=xelatex --citeproc --bibliography=references.bib
+    latexmk -pdf main.tex
