@@ -1,0 +1,76 @@
+{
+  "label": "synthetic_single_single_hill",
+  "domain": "synthetic",
+  "dataset_name": "single",
+  "model_name": "single_hill",
+  "seed": 42,
+  "train_size": 150,
+  "test_size": 50,
+  "converged": true,
+  "convergence": {
+    "max_rhat": 1.01,
+    "min_ess_bulk": 195.0
+  },
+  "loo": {
+    "elpd_loo": -388.9485445022583,
+    "se": 8.546840110092763,
+    "pareto_k_bad": 0,
+    "pareto_k_very_bad": 0
+  },
+  "waic": {
+    "elpd_waic": -388.88093420141377,
+    "se": 8.540420267068551
+  },
+  "train_metrics": {
+    "rmse": 3.0884523391723633,
+    "coverage_90": 0.9
+  },
+  "test_metrics": {
+    "rmse": 2.763226270675659,
+    "coverage_90": 0.94
+  },
+  "effective_k": {
+    "mean": 1.0,
+    "std": 0.0
+  },
+  "fit_summary": {
+    "retry_attempt": 0,
+    "inference_seed": 42,
+    "num_warmup_used": 400,
+    "num_samples_used": 400,
+    "target_accept_prob_used": 0.9
+  },
+  "parameter_recovery": {
+    "alpha": {
+      "true": 0.5,
+      "mean": 0.46244820952415466,
+      "ci_low": 0.3484784960746765,
+      "ci_high": 0.553012490272522,
+      "in_ci": true
+    },
+    "sigma": {
+      "true": 3.0,
+      "mean": 3.168156147003174,
+      "ci_low": 2.8060600757598877,
+      "ci_high": 3.572726011276245,
+      "in_ci": true
+    },
+    "intercept": {
+      "true": 50.0,
+      "mean": 53.501380920410156,
+      "ci_low": 46.174190521240234,
+      "ci_high": 58.97645950317383,
+      "in_ci": true
+    }
+  },
+  "latent_train": {
+    "rmse": 0.432585209608078,
+    "mae": 0.3358343839645386,
+    "coverage_90": 1.0
+  },
+  "latent_test": {
+    "rmse": 0.49839362502098083,
+    "mae": 0.40727806091308594,
+    "coverage_90": 1.0
+  }
+}

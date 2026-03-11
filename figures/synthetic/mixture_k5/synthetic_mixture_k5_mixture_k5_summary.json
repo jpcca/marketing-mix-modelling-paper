@@ -1,0 +1,81 @@
+{
+  "label": "synthetic_mixture_k5_mixture_k5",
+  "domain": "synthetic",
+  "dataset_name": "mixture_k5",
+  "model_name": "mixture_k5",
+  "seed": 42,
+  "train_size": 150,
+  "test_size": 50,
+  "converged": true,
+  "convergence": {
+    "max_rhat": 1.02,
+    "min_ess_bulk": 34.0
+  },
+  "loo": {
+    "elpd_loo": -436.625,
+    "se": 9.13720015664695,
+    "pareto_k_bad": 0,
+    "pareto_k_very_bad": 0
+  },
+  "waic": {
+    "elpd_waic": -436.48421061458066,
+    "se": 9.105452889940185
+  },
+  "train_metrics": {
+    "rmse": 4.557397365570068,
+    "coverage_90": 0.94
+  },
+  "test_metrics": {
+    "rmse": 5.631133556365967,
+    "coverage_90": 0.88
+  },
+  "effective_k": {
+    "mean": 2.944,
+    "std": 0.8490371016628189
+  },
+  "fit_summary": {
+    "retry_attempt": 0,
+    "inference_seed": 42,
+    "num_warmup_used": 500,
+    "num_samples_used": 500,
+    "target_accept_prob_used": 0.9
+  },
+  "label_invariant": {
+    "rhat_log_lik": 1.0058348426722492,
+    "threshold": 1.01
+  },
+  "parameter_recovery": {
+    "alpha": {
+      "true": 0.5,
+      "mean": 0.48907268047332764,
+      "ci_low": 0.38709643483161926,
+      "ci_high": 0.5888993740081787,
+      "in_ci": true
+    },
+    "sigma": {
+      "true": 3.0,
+      "mean": 2.979482889175415,
+      "ci_low": 2.393643856048584,
+      "ci_high": 3.687938928604126,
+      "in_ci": true
+    },
+    "intercept": {
+      "true": 50.0,
+      "mean": 55.17811584472656,
+      "ci_low": 49.548851013183594,
+      "ci_high": 58.76953125,
+      "in_ci": true
+    },
+    "pis": {}
+  },
+  "latent_train": {
+    "rmse": 3.7471871376037598,
+    "mae": 3.242727279663086,
+    "coverage_90": 0.1
+  },
+  "latent_test": {
+    "rmse": 4.3218159675598145,
+    "mae": 3.3036632537841797,
+    "coverage_90": 0.32
+  }
+}
