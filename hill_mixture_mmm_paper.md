@@ -76,12 +76,6 @@ Key findings: (1) When the true DGP is simple ($K=1$), mixture models incur only
 
 ![Convergence rate heatmap showing the proportion of runs achieving $\hat{R} < 1.05$ across DGP complexity and model specifications. The Sparse K=5 model achieves substantially better convergence than Mixture K=3, particularly at higher true complexity.](figures/fig3_convergence_heatmap.png){#fig:convergence width=80%}
 
-**Effective component recovery.** The sparsity mechanism successfully recovers approximate complexity: for $K=1$, effective components $\approx 1.9$; for $K=2$, $\approx 2.6-2.8$; for $K=3$, $\approx 2.9-3.7$. However, when true $K=5$, both models underestimate complexity (effective $K \approx 3.5-3.7$), suggesting limitations in recovering high-dimensional mixtures.
-
-Figure 4 illustrates how the mixture model captures heterogeneous response curves. The left panel shows true segment-specific Hill curves used in data generation, while the right panel shows posterior estimates with 90% credible intervals. The mixture successfully recovers the shape and ordering of response curves, demonstrating interpretable segment-specific marketing effectiveness.
-
-![True vs. estimated response curves for a heterogeneous DGP. Left: true segment-specific Hill curves. Right: posterior mean estimates with 90% credible intervals. The mixture model successfully captures the heterogeneous response patterns across latent consumer segments.](figures/fig6_response_curves.png){#fig:response-curves width=100%}
-
 # 4. Discussion and Conclusion
 
 The proposed Hill mixture model addresses a fundamental limitation of standard MMM by allowing heterogeneous consumer response. Key advantages include: (1) interpretable segment-specific parameters, (2) full uncertainty quantification through Bayesian inference, and (3) automatic complexity control via sparse Dirichlet priors.
