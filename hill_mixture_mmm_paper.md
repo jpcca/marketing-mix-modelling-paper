@@ -25,9 +25,9 @@ This paper addresses these limitations by proposing a Bayesian mixture of Hill s
 
 # 2. Model Specification
 
-Let $x_t$ denote marketing spend at time $t$ and $y_t$ the observed outcome. The model proceeds as follows. Figure 1 presents the graphical model in plate notation.
+Let $x_t$ denote marketing spend at time $t$ and $y_t$ the observed outcome. The model proceeds as follows. Figure 1 presents a conceptual graphical summary of the model.
 
-![Graphical model of the Bayesian Hill mixture. Observed variables are shaded; plates indicate replication over time steps $t$ and mixture components $k$.](figures/fig0_graphical_model.png){#fig:graphical-model width=80%}
+![Conceptual overview of the Bayesian Hill mixture. Observed variables are shaded; the diagram separates temporal structure, segment-specific Hill responses, and the final mixture observation model.](figures/fig0_graphical_model.png){#fig:graphical-model width=80%}
 
 **Adstock transformation.** We apply geometric decay to capture carryover effects:
 $$s_t = x_t + \alpha \cdot s_{t-1}, \quad s_0 = 0$$
