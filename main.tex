@@ -45,9 +45,9 @@ where $\alpha \in [0,1]$ is the decay parameter with prior $\alpha \sim \text{Be
 
 \paragraph{Hill saturation.} For each latent segment $k \in \{1, \ldots, K\}$, the response function is:
 \begin{equation}
-    f_k(s) = A_k \cdot \frac{s^{n_k}}{\lambda_k^{n_k} + s^{n_k}}
+    f_k(s) = A_k \cdot \frac{s^{n_k}}{k_k^{n_k} + s^{n_k}}
 \end{equation}
-where $A_k$ is the maximum effect, $\lambda_k$ is the half-saturation point, and $n_k \sim \text{LogNormal}(\log 1.5, 0.4)$ controls curve steepness.
+where $A_k$ is the maximum effect, $k_k$ is the half-saturation point, and $n_k$ controls curve steepness.
 
 \paragraph{Mixture weights.} For $K > 1$, the component weights use a finite stick-breaking parameterization:
 \begin{equation}
@@ -63,7 +63,7 @@ where $A_k$ is the maximum effect, $\lambda_k$ is the half-saturation point, and
 \end{equation}
 where $\mu_0, \beta$ capture baseline trend.
 
-\paragraph{Hierarchical stabilization.} Component amplitudes and Hill exponents share hierarchical priors, and we add modest fixed offsets on $\log A_k$ and $\log n_k$ to keep neighboring components separated during sampling. Half-saturation points are ordered through cumulative positive increments on $\log \lambda_k$, which gives an identifiable component ordering without hard-coding the component values.
+\paragraph{Hierarchical stabilization.} Component amplitudes and Hill exponents share hierarchical priors, and we add modest fixed offsets on $\log A_k$ and $\log n_k$ to keep neighboring components separated during sampling. Half-saturation points are ordered through cumulative positive increments on $\log k_k$, which gives an identifiable component ordering without hard-coding the component values.
 
 \paragraph{Automatic prior scaling.} To accommodate diverse data scales, priors are computed automatically from training data: $A_k \sim \text{LogNormal}(\log(0.3 \cdot \text{range}(y)), 0.8)$, $\mu_0 \sim \mathcal{N}(\bar{y}, 2\sigma_y)$, and $\sigma \sim \text{HalfNormal}(\sigma_y)$.
 
@@ -71,9 +71,9 @@ where $\mu_0, \beta$ capture baseline trend.
 
 Mixture models suffer from label switching, where posterior samples may exchange component labels across MCMC iterations. This renders standard convergence diagnostics meaningless: chains may have converged to the same posterior but with permuted labels.
 
-\paragraph{Within-MCMC ordering.} We impose ordering through a base half-saturation point plus positive increments on the log scale, ensuring $\lambda_1 < \lambda_2 < \cdots < \lambda_K$ while keeping the parameterization compatible with non-centered sampling.
+\paragraph{Within-MCMC ordering.} We impose ordering through a base half-saturation point plus positive increments on the log scale, ensuring $k_1 < k_2 < \cdots < k_K$ while keeping the parameterization compatible with non-centered sampling.
 
-\paragraph{Post-hoc relabeling.} Ordering on $\lambda_k$ is not sufficient to make every component-specific diagnostic stable. After MCMC, we therefore relabel component summaries deterministically by ordered $\lambda_k$ before reporting component-level diagnostics and recovery plots.
+\paragraph{Post-hoc relabeling.} Ordering on $k_k$ is not sufficient to make every component-specific diagnostic stable. After MCMC, we therefore relabel component summaries deterministically by ordered $k_k$ before reporting component-level diagnostics and recovery plots.
 
 \paragraph{Label-invariant diagnostics.} We compute R-hat on three quantities: (1) the total log-likelihood (label-invariant by construction), (2) scalar parameters ($\alpha$, $\sigma$), and (3) relabeled component parameters. In the synthetic benchmark we report both a strict convergence flag and a broader publication-level status that allows Warn/Pass separation for mixture fits.
 
