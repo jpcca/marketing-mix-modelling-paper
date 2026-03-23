@@ -72,9 +72,9 @@ Key findings: (1) When the true DGP is simple ($K=1$), mixture models incur only
 
 ![ELPD-LOO comparison across data-generating processes and models. Higher values indicate better predictive performance. Mixture models show substantial gains over the Single Hill baseline when true heterogeneity exists ($K \geq 2$), with minimal penalty on simple data ($K=1$).](figures/fig1_elpd_comparison.png){#fig:elpd-comparison width=100%}
 
-**Convergence diagnostics.** The Sparse K=5 model demonstrates superior convergence properties (Figure 3). For the $K=3$ DGP, the Mixture K=3 model exhibited convergence difficulties (0/5 runs achieved $\hat{R} < 1.05$, with $\hat{R}$ ranging from 1.22 to 1.78), while Sparse K=5 achieved convergence in 3/5 runs. This suggests that the additional flexibility and sparsity-inducing prior of the Sparse K=5 specification helps avoid local modes.
+**Convergence diagnostics.** The Sparse K=5 model demonstrates superior convergence properties (Figure 4). For the $K=3$ DGP, the Mixture K=3 model exhibited convergence difficulties (0/5 runs achieved $\hat{R} < 1.05$, with $\hat{R}$ ranging from 1.22 to 1.78), while Sparse K=5 achieved convergence in 3/5 runs. This suggests that the additional flexibility and sparsity-inducing prior of the Sparse K=5 specification helps avoid local modes.
 
-![Convergence rate heatmap showing the proportion of runs achieving $\hat{R} < 1.05$ across DGP complexity and model specifications. The Sparse K=5 model achieves substantially better convergence than Mixture K=3, particularly at higher true complexity.](figures/fig3_convergence_heatmap.png){#fig:convergence width=80%}
+![Convergence rate heatmap showing the proportion of runs achieving $\hat{R} < 1.05$ across DGP complexity and model specifications. The Sparse K=5 model achieves substantially better convergence than Mixture K=3, particularly at higher true complexity.](figures/fig4_convergence_heatmap.png){#fig:convergence width=80%}
 
 # 4. Discussion and Conclusion
 
