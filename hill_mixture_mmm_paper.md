@@ -13,7 +13,7 @@ header-includes:
   - \usepackage{booktabs}
 ---
 
-> Note: `main.tex` is the canonical manuscript. This Markdown file is a legacy draft kept for reference and may not match the latest benchmark results or paper structure.
+> Note: `main.tex` is the canonical manuscript. This Markdown file is an archival draft kept for reference only. Its benchmark setup and numeric claims predate the March 2026 synthetic benchmark refresh (3 DGPs x 3 models, MAPE-based secondary gates) and should not be cited for current paper results.
 
 # 1. Introduction
 
