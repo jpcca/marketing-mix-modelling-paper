@@ -13,7 +13,7 @@ header-includes:
   - \usepackage{booktabs}
 ---
 
-> Note: `main.tex` is the canonical manuscript. This Markdown file is an archival draft kept for reference only. Its benchmark setup and numeric claims predate the March 2026 synthetic benchmark refresh (3 DGPs x 3 models, MAPE-based secondary gates) and should not be cited for current paper results.
+> Note: `main.tex` is the canonical manuscript. This Markdown file is a legacy draft kept for reference and may not match the latest benchmark results or paper structure.
 
 # 1. Introduction
 
@@ -25,9 +25,9 @@ This paper addresses these limitations by proposing a Bayesian mixture of Hill s
 
 # 2. Model Specification
 
-Let $x_t$ denote marketing spend at time $t$ and $y_t$ the observed outcome. The model proceeds as follows. Figure 1 presents a conceptual graphical summary of the model.
+Let $x_t$ denote marketing spend at time $t$ and $y_t$ the observed outcome. The model proceeds as follows. Figure 1 presents the graphical model in plate notation.
 
-![Conceptual overview of the Bayesian Hill mixture. Observed variables are shaded; the diagram separates temporal structure, segment-specific Hill responses, and the final mixture observation model.](figures/fig0_graphical_model.png){#fig:graphical-model width=80%}
+![Graphical model of the Bayesian Hill mixture. Observed variables are shaded; plates indicate replication over time steps $t$ and mixture components $k$.](figures/fig0_graphical_model.png){#fig:graphical-model width=80%}
 
 **Adstock transformation.** We apply geometric decay to capture carryover effects:
 $$s_t = x_t + \alpha \cdot s_{t-1}, \quad s_0 = 0$$
@@ -72,9 +72,15 @@ Key findings: (1) When the true DGP is simple ($K=1$), mixture models incur only
 
 ![ELPD-LOO comparison across data-generating processes and models. Higher values indicate better predictive performance. Mixture models show substantial gains over the Single Hill baseline when true heterogeneity exists ($K \geq 2$), with minimal penalty on simple data ($K=1$).](figures/fig1_elpd_comparison.png){#fig:elpd-comparison width=100%}
 
-**Convergence diagnostics.** The Sparse K=5 model demonstrates superior convergence properties (Figure 4). For the $K=3$ DGP, the Mixture K=3 model exhibited convergence difficulties (0/5 runs achieved $\hat{R} < 1.05$, with $\hat{R}$ ranging from 1.22 to 1.78), while Sparse K=5 achieved convergence in 3/5 runs. This suggests that the additional flexibility and sparsity-inducing prior of the Sparse K=5 specification helps avoid local modes.
+**Convergence diagnostics.** The Sparse K=5 model demonstrates superior convergence properties (Figure 3). For the $K=3$ DGP, the Mixture K=3 model exhibited convergence difficulties (0/5 runs achieved $\hat{R} < 1.05$, with $\hat{R}$ ranging from 1.22 to 1.78), while Sparse K=5 achieved convergence in 3/5 runs. This suggests that the additional flexibility and sparsity-inducing prior of the Sparse K=5 specification helps avoid local modes.
 
-![Convergence rate heatmap showing the proportion of runs achieving $\hat{R} < 1.05$ across DGP complexity and model specifications. The Sparse K=5 model achieves substantially better convergence than Mixture K=3, particularly at higher true complexity.](figures/fig4_convergence_heatmap.png){#fig:convergence width=80%}
+![Convergence rate heatmap showing the proportion of runs achieving $\hat{R} < 1.05$ across DGP complexity and model specifications. The Sparse K=5 model achieves substantially better convergence than Mixture K=3, particularly at higher true complexity.](figures/fig3_convergence_heatmap.png){#fig:convergence width=80%}
+
+**Effective component recovery.** The sparsity mechanism successfully recovers approximate complexity: for $K=1$, effective components $\approx 1.9$; for $K=2$, $\approx 2.6-2.8$; for $K=3$, $\approx 2.9-3.7$. However, when true $K=5$, both models underestimate complexity (effective $K \approx 3.5-3.7$), suggesting limitations in recovering high-dimensional mixtures.
+
+Figure 4 illustrates how the mixture model captures heterogeneous response curves. The left panel shows true segment-specific Hill curves used in data generation, while the right panel shows posterior estimates with 90% credible intervals. The mixture successfully recovers the shape and ordering of response curves, demonstrating interpretable segment-specific marketing effectiveness.
+
+![True vs. estimated response curves for a heterogeneous DGP. Left: true segment-specific Hill curves. Right: posterior mean estimates with 90% credible intervals. The mixture model successfully captures the heterogeneous response patterns across latent consumer segments.](figures/fig6_response_curves.png){#fig:response-curves width=100%}
 
 # 4. Discussion and Conclusion
 
