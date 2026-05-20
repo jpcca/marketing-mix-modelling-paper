@@ -218,7 +218,25 @@ Toys \& Hobbies    & Single Hill    & $-6{,}379$ & $36.4$ & $57.3$ & $0.94$ \\
 \end{tabular}
 \end{table}
 
+Figure~\ref{fig:real_elpd_bar} visualises the same comparison. The Mixture~$K=3$ advantage is consistent in sign across organisations, while the absolute scale of ELPD-LOO varies by an order of magnitude with series length and target variance.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/fig_real_elpd_bar.png}
+\caption{Real-data ELPD-LOO across the three organisations and three models. Higher is better. Error bars are $\pm 1$ standard deviation across three random seeds. Mixture~$K=3$ achieves the highest ELPD-LOO in every organisation, with seed-level variability much smaller than the model-level gap.}
+\label{fig:real_elpd_bar}
+\end{figure}
+
 The relationship between ELPD and the other metrics is heterogeneous. On \emph{home \& garden} the rank ordering of models is consistent across ELPD, CRPS, and MAPE: the mixture improves all three. On \emph{toys \& hobbies}, ELPD and CRPS both improve, while MAPE is non-monotonic. On \emph{beauty \& fitness}, ELPD improves substantially but MAPE and CRPS deteriorate slightly for $K=3$, and the model remains visibly underconfident: 90\% coverage rises from $0.33$ (single) to $0.54$ ($K=3$) but stays well below the nominal level, indicating that the predictive intervals are too narrow even for the best fit. We return to this in the discussion.
+
+To make concrete what the mixture is doing, Figure~\ref{fig:real_response_panel} shows the posterior response curves for the home \& garden organisation under all three models on a single representative seed. Single-Hill recovers one slowly-saturating curve. Mixture~$K=2$ resolves two components with weights $0.93$ and $0.07$, in which the small minority component carries a much higher saturation ceiling. Mixture~$K=3$ uses two active components with weights $0.84$ and $0.14$ and a third component that collapses to weight $0.02$ (labelled \emph{inactive} in the legend). The qualitative two-mode structure is robust to whether $K$ is set to 2 or 3, which is consistent with the posterior effective component count reported below.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_real_response_panel.png}
+\caption{Posterior response curves for Home \& Garden (seed 0) under Single Hill, Mixture~$K=2$, and Mixture~$K=3$. Shaded bands are 90\% posterior intervals; legend entries report posterior mixture weights $\hat\pi$ per component. The Mixture~$K=3$ third component is labelled \emph{inactive} because its weight collapses to $0.02$.}
+\label{fig:real_response_panel}
+\end{figure}
 
 \subsection{Convergence on Real Data}
 
