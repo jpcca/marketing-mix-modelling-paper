@@ -1,0 +1,61 @@
+{
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "models": [
+    "mixture_k2",
+    "mixture_k3"
+  ],
+  "separation_metrics": [
+    "true_separation",
+    "true_nabc_separation",
+    "true_cosine_separation"
+  ],
+  "effective_count_metrics": [
+    "similarity_adjusted_count",
+    "nabc_effective_count",
+    "shannon_count"
+  ],
+  "cases": [
+    {
+      "K_true": 1,
+      "profile_id": "tv00_anchor"
+    },
+    {
+      "K_true": 2,
+      "profile_id": "tv07_low"
+    },
+    {
+      "K_true": 2,
+      "profile_id": "tv27_mid"
+    },
+    {
+      "K_true": 2,
+      "profile_id": "tv59_high"
+    },
+    {
+      "K_true": 2,
+      "profile_id": "tv94_extreme"
+    },
+    {
+      "K_true": 3,
+      "profile_id": "tv05_low"
+    },
+    {
+      "K_true": 3,
+      "profile_id": "tv18_mid"
+    },
+    {
+      "K_true": 3,
+      "profile_id": "tv41_high"
+    },
+    {
+      "K_true": 3,
+      "profile_id": "tv73_extreme"
+    }
+  ]
+}
