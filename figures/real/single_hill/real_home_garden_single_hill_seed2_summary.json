@@ -1,0 +1,166 @@
+{
+  "label": "real_home_garden_single_hill_seed2",
+  "domain": "real",
+  "dataset_name": "7059e30b528ed5f14ee9921de13248e5",
+  "model_name": "single_hill",
+  "seed": 2,
+  "train_size": 1231,
+  "test_size": 411,
+  "converged": false,
+  "publication_status": "Warn",
+  "interpretation_status": "NotApplicable",
+  "benchmark_pass": true,
+  "convergence": {
+    "max_rhat": 1.02,
+    "min_ess_bulk": 384.0,
+    "min_ess_tail": 393.0
+  },
+  "hmc_diagnostics": {
+    "num_divergences": 0,
+    "min_bfmi": 0.9851851463317871,
+    "tree_depth_hits": 0,
+    "max_num_steps": 383,
+    "mean_accept_prob": 0.9590117335319519
+  },
+  "loo": {
+    "elpd_loo": -6168.1658544540405,
+    "se": 63.47664661971279,
+    "pareto_k_bad": 1,
+    "pareto_k_very_bad": 0
+  },
+  "waic": {
+    "elpd_waic": -6168.274033068505,
+    "se": 63.549333986831016
+  },
+  "train_metrics": {
+    "mape": 43.25670842562763,
+    "nrmse": 0.06212950709953707,
+    "crps": 18.290293978351215,
+    "coverage_90": 0.934199837530463
+  },
+  "test_metrics": {
+    "mape": 26.086581140239662,
+    "nrmse": 0.09632441802689731,
+    "crps": 25.035234725996542,
+    "coverage_90": 0.8661800486618005
+  },
+  "effective_k": {
+    "mean": 1.0,
+    "std": 0.0
+  },
+  "diagnostic_status": {
+    "publication_status": "Warn",
+    "sampler_status": "Pass",
+    "mixing_status": "Warn",
+    "interpretation_status": "NotApplicable",
+    "benchmark_pass": true,
+    "strict_converged": false,
+    "warnings": [
+      "max_rhat=1.020 exceeds pass threshold 1.010"
+    ],
+    "failures": [],
+    "checks": [
+      {
+        "name": "num_divergences",
+        "status": "Pass",
+        "value": 0.0,
+        "direction": "upper",
+        "pass_threshold": 0.0,
+        "fail_threshold": 5.0,
+        "message": null,
+        "group": "sampler"
+      },
+      {
+        "name": "min_bfmi",
+        "status": "Pass",
+        "value": 0.9851851463317871,
+        "direction": "lower",
+        "pass_threshold": 0.3,
+        "fail_threshold": 0.2,
+        "message": null,
+        "group": "sampler"
+      },
+      {
+        "name": "tree_depth_hits",
+        "status": "Pass",
+        "value": 0.0,
+        "direction": "upper",
+        "pass_threshold": 0.0,
+        "fail_threshold": 10.0,
+        "message": null,
+        "group": "sampler"
+      },
+      {
+        "name": "max_rhat",
+        "status": "Warn",
+        "value": 1.02,
+        "direction": "upper",
+        "pass_threshold": 1.01,
+        "fail_threshold": 1.05,
+        "message": "max_rhat=1.020 exceeds pass threshold 1.010",
+        "group": "mixing"
+      },
+      {
+        "name": "min_ess_bulk_per_chain",
+        "status": "Pass",
+        "value": 192.0,
+        "direction": "lower",
+        "pass_threshold": 100.0,
+        "fail_threshold": 50.0,
+        "message": null,
+        "group": "mixing"
+      },
+      {
+        "name": "min_ess_tail_per_chain",
+        "status": "Pass",
+        "value": 196.5,
+        "direction": "lower",
+        "pass_threshold": 100.0,
+        "fail_threshold": 50.0,
+        "message": null,
+        "group": "mixing"
+      }
+    ]
+  },
+  "fit_summary": {
+    "inference_seed": 2,
+    "num_warmup_used": 600,
+    "num_samples_used": 600,
+    "num_chains_used": 2,
+    "target_accept_prob_used": 0.9,
+    "max_tree_depth_used": 10,
+    "dense_mass_used": false,
+    "init_strategy_used": "uniform"
+  },
+  "component_count_plot": {
+    "curve_basis": "l1_normalized_hill_curve_increments",
+    "curve_grid_max": 4.0,
+    "grid_size": 128,
+    "gamma": 0.5,
+    "true_separation": null,
+    "estimated_effective_count": 1.0
+  },
+  "component_summary": {
+    "K_total": 1,
+    "K_active": 1,
+    "weight_threshold": 0.05,
+    "scale_reference": 1.0,
+    "components": [
+      {
+        "index": 0,
+        "A_mean": 1360.4075238545736,
+        "A_std": 297.0850734915485,
+        "k_mean": 22712.84979736328,
+        "k_std": 7240.431187196968,
+        "k_ratio_mean": 22712.84979736328,
+        "k_ratio_std": 7240.431187196968,
+        "n_mean": 0.9855430712302525,
+        "n_std": 0.07500647077858703,
+        "pi_mean": 1.0,
+        "pi_std": 0.0,
+        "active": true
+      }
+    ]
+  },
+  "parameter_recovery": {}
+}

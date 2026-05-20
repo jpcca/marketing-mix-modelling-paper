@@ -1,0 +1,271 @@
+{
+  "label": "real_home_garden_mixture_k2_seed0",
+  "domain": "real",
+  "dataset_name": "7059e30b528ed5f14ee9921de13248e5",
+  "model_name": "mixture_k2",
+  "seed": 0,
+  "train_size": 1231,
+  "test_size": 411,
+  "converged": false,
+  "publication_status": "Warn",
+  "interpretation_status": "Pass",
+  "benchmark_pass": true,
+  "convergence": {
+    "max_rhat": 1.01,
+    "min_ess_bulk": 634.0,
+    "min_ess_tail": 798.0
+  },
+  "hmc_diagnostics": {
+    "num_divergences": 0,
+    "min_bfmi": 0.9245020747184753,
+    "tree_depth_hits": 9,
+    "max_num_steps": 1023,
+    "mean_accept_prob": 0.958328127861023
+  },
+  "loo": {
+    "elpd_loo": -5985.188040733337,
+    "se": 55.75530997969512,
+    "pareto_k_bad": 0,
+    "pareto_k_very_bad": 0
+  },
+  "waic": {
+    "elpd_waic": -5985.279795768729,
+    "se": 55.8580466796014
+  },
+  "train_metrics": {
+    "mape": 32.78370203873672,
+    "nrmse": 0.07385126271092164,
+    "crps": 18.729093181152823,
+    "coverage_90": 0.9480097481722177
+  },
+  "test_metrics": {
+    "mape": 31.35212473189437,
+    "nrmse": 0.1098893858195861,
+    "crps": 27.170460277126168,
+    "coverage_90": 0.8832116788321168
+  },
+  "effective_k": {
+    "mean": 1.9422222222222223,
+    "std": 0.23332275108278555
+  },
+  "diagnostic_status": {
+    "publication_status": "Warn",
+    "sampler_status": "Warn",
+    "mixing_status": "Pass",
+    "interpretation_status": "Pass",
+    "benchmark_pass": true,
+    "strict_converged": false,
+    "warnings": [
+      "tree_depth_hits=9.000 exceeds pass threshold 0.000"
+    ],
+    "failures": [],
+    "checks": [
+      {
+        "name": "num_divergences",
+        "status": "Pass",
+        "value": 0.0,
+        "direction": "upper",
+        "pass_threshold": 0.0,
+        "fail_threshold": 5.0,
+        "message": null,
+        "group": "sampler"
+      },
+      {
+        "name": "min_bfmi",
+        "status": "Pass",
+        "value": 0.9245020747184753,
+        "direction": "lower",
+        "pass_threshold": 0.3,
+        "fail_threshold": 0.2,
+        "message": null,
+        "group": "sampler"
+      },
+      {
+        "name": "tree_depth_hits",
+        "status": "Warn",
+        "value": 9.0,
+        "direction": "upper",
+        "pass_threshold": 0.0,
+        "fail_threshold": 10.0,
+        "message": "tree_depth_hits=9.000 exceeds pass threshold 0.000",
+        "group": "sampler"
+      },
+      {
+        "name": "label_invariant_max_rhat",
+        "status": "Pass",
+        "value": 1.0060999783981068,
+        "direction": "upper",
+        "pass_threshold": 1.01,
+        "fail_threshold": 1.05,
+        "message": null,
+        "group": "mixing"
+      },
+      {
+        "name": "label_invariant_min_ess_bulk_per_chain",
+        "status": "Pass",
+        "value": 413.41594989013487,
+        "direction": "lower",
+        "pass_threshold": 100.0,
+        "fail_threshold": 50.0,
+        "message": null,
+        "group": "mixing"
+      },
+      {
+        "name": "label_invariant_min_ess_tail_per_chain",
+        "status": "Pass",
+        "value": 455.63677843782926,
+        "direction": "lower",
+        "pass_threshold": 100.0,
+        "fail_threshold": 50.0,
+        "message": null,
+        "group": "mixing"
+      },
+      {
+        "name": "relabeled_max_rhat",
+        "status": "Pass",
+        "value": 1.0011141952084255,
+        "direction": "upper",
+        "pass_threshold": 1.01,
+        "fail_threshold": 1.05,
+        "message": null,
+        "group": "interpretation"
+      },
+      {
+        "name": "relabeled_min_ess_bulk_per_chain",
+        "status": "Pass",
+        "value": 401.9619908949442,
+        "direction": "lower",
+        "pass_threshold": 100.0,
+        "fail_threshold": 50.0,
+        "message": null,
+        "group": "interpretation"
+      },
+      {
+        "name": "relabeled_min_ess_tail_per_chain",
+        "status": "Pass",
+        "value": 420.92102786962243,
+        "direction": "lower",
+        "pass_threshold": 100.0,
+        "fail_threshold": 50.0,
+        "message": null,
+        "group": "interpretation"
+      }
+    ]
+  },
+  "fit_summary": {
+    "inference_seed": 0,
+    "num_warmup_used": 900,
+    "num_samples_used": 900,
+    "num_chains_used": 2,
+    "target_accept_prob_used": 0.95,
+    "max_tree_depth_used": 10,
+    "dense_mass_used": false,
+    "init_strategy_used": "median"
+  },
+  "component_count_plot": {
+    "curve_basis": "l1_normalized_hill_curve_increments",
+    "curve_grid_max": 4.0,
+    "grid_size": 128,
+    "gamma": 0.5,
+    "true_separation": null,
+    "estimated_effective_count": 1.0318929970712971
+  },
+  "label_invariant": {
+    "rhat_log_lik": 1.0035122370833873,
+    "max_rhat": 1.0060999783981068,
+    "min_ess_bulk": 826.8318997802697,
+    "min_ess_tail": 911.2735568756585,
+    "threshold": 1.01
+  },
+  "relabeled": {
+    "max_rhat": 1.0011141952084255,
+    "min_ess_bulk": 803.9239817898884,
+    "min_ess_tail": 841.8420557392449,
+    "threshold": 1.01,
+    "component_rhats": {
+      "A": {
+        "max": 1.0008584756723875,
+        "per_component": [
+          1.0008584756723875,
+          1.0003636648341392
+        ]
+      },
+      "k": {
+        "max": 1.0008040156627598,
+        "per_component": [
+          1.0004727049134456,
+          1.0008040156627598
+        ]
+      },
+      "n": {
+        "max": 1.0011141952084255,
+        "per_component": [
+          1.0011141952084255,
+          1.000891071635745
+        ]
+      },
+      "pis": {
+        "max": 1.000777271532811,
+        "per_component": [
+          1.000777271532811,
+          1.000777271532811
+        ]
+      }
+    }
+  },
+  "label_switching": {
+    "switching_rate": 0.0,
+    "n_unique_orderings": 1,
+    "mode_ordering": [
+      0,
+      1
+    ],
+    "mode_count": 1800,
+    "top_orderings": [
+      {
+        "ordering": [
+          0,
+          1
+        ],
+        "count": 1800
+      }
+    ]
+  },
+  "component_summary": {
+    "K_total": 2,
+    "K_active": 2,
+    "weight_threshold": 0.05,
+    "scale_reference": 1.0,
+    "components": [
+      {
+        "index": 0,
+        "A_mean": 258.84976958380804,
+        "A_std": 46.97722296904161,
+        "k_mean": 492.414781443278,
+        "k_std": 76.62524015563758,
+        "k_ratio_mean": 492.414781443278,
+        "k_ratio_std": 76.62524015563758,
+        "n_mean": 0.5267528796775474,
+        "n_std": 0.10222713333816626,
+        "pi_mean": 0.9346085654364692,
+        "pi_std": 0.010350948144809101,
+        "active": true
+      },
+      {
+        "index": 1,
+        "A_mean": 725.9516752794054,
+        "A_std": 44.94496123332231,
+        "k_mean": 3207.1127103000217,
+        "k_std": 511.1069403140009,
+        "k_ratio_mean": 3207.1127103000217,
+        "k_ratio_std": 511.1069403140009,
+        "n_mean": 0.6508414204418659,
+        "n_std": 0.06362121812737254,
+        "pi_mean": 0.06539143456353082,
+        "pi_std": 0.010350948144809101,
+        "active": true
+      }
+    ]
+  },
+  "parameter_recovery": {}
+}
