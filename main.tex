@@ -9,156 +9,267 @@
 \usepackage{natbib}
 \usepackage{graphicx}
 
-\title{Bayesian Hill Mixture Models for Heterogeneous Consumer Response in Marketing Mix Modeling}
+\title{Bayesian Hill Mixture Models for Marketing Mix Modeling:\\
+Synthetic Benchmarks, Component Resolvability, and Real-Data Evaluation}
 \author{Shohei Yoshida, Grisha Szep, Mizuki Oka}
-\date{March 2026}
+\date{May 2026}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Marketing Mix Models (MMM) are widely used for measuring advertising effectiveness, yet standard implementations assume homogeneous consumer response to marketing spend. This paper proposes a Bayesian mixture of Hill saturation functions to capture heterogeneous response patterns across latent consumer segments---a capability that single-curve models do not provide. We implement the approach in NumPyro with automatic prior scaling and label-invariant convergence diagnostics with post-hoc relabeling. Our confirmatory evidence comes from a calibrated synthetic benchmark of 80 runs across four data-generating processes. When the true response is homogeneous, the single-Hill baseline remains best and mixture models incur only a small ELPD penalty (about 1 point). When heterogeneity is present, the matched mixture improves ELPD by roughly +3, +10, and +18 for true $K=2,3,5$ respectively. We evaluate holdout predictions sequentially, preserving both adstock state and absolute time index across the train/test split, and find that mixture gains are strongest in predictive density while RMSE differences remain smaller and latent-state coverage becomes difficult in the highest-$K$ settings. Real-data experiments are currently treated as exploratory because data selection and preprocessing are still under refinement. We provide practical guidance for using mixture-based MMM as a controlled benchmark for heterogeneous saturation effects.
+Marketing Mix Models (MMMs) typically assume that all consumers respond to advertising with a single Hill saturation curve, but real audiences are heterogeneous. We study a Bayesian mixture of Hill curves that allows multiple latent response segments to coexist within a channel, implemented in NumPyro with label-invariant convergence diagnostics and post-hoc relabeling. Three complementary experiments are reported. First, a controlled synthetic benchmark over single-Hill and mixture data-generating processes shows that mixture models improve expected log pointwise predictive density (ELPD-LOO) whenever the truth is heterogeneous and incur only a small penalty otherwise. Second, a component resolvability study varies the cosine distance between true Hill curves and characterizes how much component separation is required before the posterior recovers the underlying number of components. Third, a real-data benchmark on three Conjura organisations spanning three verticals (beauty \& fitness, home \& garden, toys \& hobbies) shows that the three-component mixture improves ELPD-LOO over single-Hill in every organisation (by 222 to 308 units). At the same time, the strict label-invariant and relabeled convergence criteria that the mixture models satisfy on synthetic data fail uniformly for the three-component model on real data, exposing a diagnostic gap between idealised benchmarks and field data that we believe is methodologically important to report. All code, configurations, and per-case artifacts are released for reproduction.
 \end{abstract}
 
-\noindent\textbf{Keywords:} Marketing Mix Modeling, Bayesian inference, Hill function, mixture models, label switching
+\noindent\textbf{Keywords:} Marketing Mix Modeling, Bayesian inference, Hill function, mixture models, label switching, component resolvability
 
 \section{Introduction}
 
-Marketing Mix Modeling (MMM) enables organizations to quantify the effectiveness of marketing investments and optimize budget allocation. Modern implementations typically employ Hill saturation functions to capture diminishing returns and geometric decay adstock transformations to model carryover effects \citep{jin2017bayesian, chan2017challenges}. We refer to this standard approach---using a single Hill curve to model the relationship between marketing spend and response---as \emph{Standard MMM}.
+Marketing Mix Modeling enables organisations to quantify the effectiveness of advertising spend and to optimise budget allocation. Modern implementations rely on two standard transformations: geometric or Weibull adstock to model carryover effects, and Hill saturation to model diminishing returns \citep{jin2017bayesian, chan2017challenges}. We refer to this canonical formulation---one Hill curve per channel, fit on aggregate time-series data---as \emph{Standard MMM}.
 
-A critical limitation of Standard MMM is its assumption that all consumers respond identically to marketing stimuli. In reality, different segments---heavy versus light buyers, brand loyalists versus switchers---exhibit heterogeneous response patterns \citep{wedel2000market, allenby1998marketing}. A single aggregate response curve represents a weighted average that masks segment-specific behaviors, potentially leading to suboptimal budget allocation. Recent work has shown that apparent nonlinear effects in MMM may be artifacts of this homogeneity assumption \citep{dew2024mmm}, further motivating more flexible approaches.
+Standard MMM assumes that all consumers respond to a given channel with the same saturation curve. In practice, audiences are heterogeneous: heavy versus light buyers, loyalists versus switchers, and geographically distinct segments exhibit qualitatively different response patterns \citep{wedel2000market, allenby1998marketing}. A single aggregate curve is a weighted average of these latent responses, and aggregate-level estimates can be misleading even when in-sample fit looks good. \citet{dew2024mmm} further argue that nonlinear and time-varying effects in MMM are jointly not identifiable from typical observational data, so apparent saturation may even be an artefact of misspecified dynamics. This identification critique is not the focus of the present paper, but it motivates studying mixture-of-Hill models as a controlled benchmark in which heterogeneity, rather than dynamics, drives the nonlinearity.
 
-This paper proposes \emph{Mixture MMM}: a Bayesian mixture of Hill saturation functions that captures heterogeneous consumer response across latent segments. The key insight is that mixture models---regardless of the specific number of components---provide a principled framework for modeling response heterogeneity that Standard MMM cannot capture. While the optimal number of mixture components $K$ depends on dataset characteristics, the fundamental advantage of the mixture approach is consistent: the ability to identify and quantify distinct response patterns within the consumer population.
+This paper studies a Bayesian mixture of Hill curves as a principled extension of Standard MMM. The model places $K$ latent saturation curves on a single channel, with Dirichlet mixture weights, and shares adstock and baseline terms across components. We implement it in NumPyro \citep{phan2019composable} with JAX acceleration. Mixture models are well-known to suffer from label switching \citep{stephens2000label, fruhwirth2006finite}, which makes standard convergence diagnostics unreliable \citep{vehtari2021rhat}. We address this with three components: an ordering constraint on saturation half-points, post-hoc relabeling of MCMC draws, and label-invariant diagnostics computed on the joint log-likelihood and on scalar parameters that do not transform under label permutations.
 
-We implement Mixture MMM using NumPyro \citep{phan2019composable} with JAX acceleration, which recent benchmarks show achieves 2--20x faster sampling than TensorFlow-based alternatives while maintaining superior channel contribution recovery \citep{pymc2025benchmark}. A key methodological contribution is our treatment of label switching in mixture posteriors. Standard convergence diagnostics (R-hat) are unreliable for mixture models because component labels may exchange across MCMC chains. We develop post-hoc relabeling and label-invariant diagnostics to make mixture benchmarks interpretable. In this version of the paper, we ground our empirical claims primarily in synthetic experiments with known truth; real-data checks are reported only as exploratory evidence while data curation and preprocessing are still being standardized.
+We make three contributions. (1)~A clean synthetic benchmark comparing single-Hill and mixture models under known ground truth, with predictive, recovery, and convergence metrics. (2)~A \emph{component resolvability} study that systematically varies the cosine distance between true Hill curves and traces the recovered Shannon effective component count as a function of true separation. This experiment characterises empirically how much heterogeneity must be present before a Bayesian mixture can recover the underlying segments. (3)~A real-data benchmark on three Conjura organisations in three distinct verticals. The real-data results show that mixture models improve predictive density uniformly, but that the strict convergence guarantees obtained on synthetic data degrade markedly under field conditions---a diagnostic gap that we report rather than paper over.
 
 \section{Model Specification}
 
-Let $x_t$ denote marketing spend at time $t$ and $y_t$ the observed outcome. The model proceeds as follows.
+Let $x_t$ denote aggregated marketing spend at time $t$ and $y_t$ the observed outcome (purchases, revenue, or a related target). Figure~\ref{fig:graphical-model} shows the model in plate notation.
 
-\paragraph{Adstock transformation.} We apply geometric decay to capture carryover effects:
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/fig0_graphical_model.png}
+\caption{Graphical model. Observed variables are shaded; plates indicate replication over time steps $t$ and mixture components $k$.}
+\label{fig:graphical-model}
+\end{figure}
+
+\paragraph{Adstock transformation.} Geometric decay captures carryover from previous periods:
 \begin{equation}
-    s_t = x_t + \alpha \cdot s_{t-1}, \quad s_0 = 0
+    s_t = x_t + \alpha \cdot s_{t-1}, \quad s_0 = 0, \quad \alpha \sim \text{Beta}(2, 2).
 \end{equation}
-where $\alpha \in [0,1]$ is the decay parameter with prior $\alpha \sim \text{Beta}(2, 2)$.
 
-\paragraph{Hill saturation.} For each latent segment $k \in \{1, \ldots, K\}$, the response function is:
+\paragraph{Hill saturation.} Each mixture component $k \in \{1, \ldots, K\}$ has its own Hill response:
 \begin{equation}
-    f_k(s) = A_k \cdot \frac{s^{n_k}}{\lambda_k^{n_k} + s^{n_k}}
+    f_k(s) = A_k \cdot \frac{s^{n_k}}{\lambda_k^{n_k} + s^{n_k}},
 \end{equation}
-where $A_k$ is the maximum effect, $\lambda_k$ is the half-saturation point, and $n_k \sim \text{LogNormal}(\log 1.5, 0.4)$ controls curve steepness.
+with maximum effect $A_k$, half-saturation point $\lambda_k$, and slope $n_k \sim \text{LogNormal}(\log 1.5, 0.4)$.
 
-\paragraph{Mixture likelihood.} The observation model is a Gaussian mixture:
+\paragraph{Mixture likelihood.} The observation model is a Gaussian mixture over components:
 \begin{equation}
-    y_t \sim \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}\!\left(\mu_0 + \beta t + f_k(s_t),\, \sigma^2\right)
+    y_t \sim \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}\!\left(\mu_0 + \beta t + f_k(s_t),\, \sigma^2\right),
 \end{equation}
-where $\pi \sim \text{Dirichlet}(\mathbf{1}_K)$ and $\mu_0, \beta$ capture baseline trend.
+where $\pi \sim \text{Dirichlet}(\mathbf{1}_K)$ and $\mu_0, \beta$ capture intercept and trend.
 
-\paragraph{Automatic prior scaling.} To accommodate diverse data scales, priors are computed automatically from training data: $A_k \sim \text{LogNormal}(\log(0.3 \cdot \text{range}(y)), 0.8)$, $\mu_0 \sim \mathcal{N}(\bar{y}, 2\sigma_y)$, and $\sigma \sim \text{HalfNormal}(\sigma_y)$.
+\paragraph{Automatic prior scaling.} To accommodate diverse data scales, priors on $A_k$, $\mu_0$, and $\sigma$ are computed from training-data statistics: $A_k \sim \text{LogNormal}(\log(0.3 \cdot \text{range}(y)), 0.8)$, $\mu_0 \sim \mathcal{N}(\bar{y}, 2\sigma_y)$, $\sigma \sim \text{HalfNormal}(\sigma_y)$.
 
 \subsection{Identifiability and Label Switching}
 
-Mixture models suffer from label switching, where posterior samples may exchange component labels across MCMC iterations. This renders standard convergence diagnostics meaningless: chains may have converged to the same posterior but with permuted labels.
+A finite mixture is invariant under permutations of component labels: any reordering of $(\pi_k, A_k, \lambda_k, n_k)$ yields the same likelihood. As a result, posterior summaries computed per component are meaningless without an additional convention, and standard split-$\widehat{R}$ on raw component parameters cannot distinguish genuine non-mixing from label permutations across chains \citep{stephens2000label, fruhwirth2006finite}.
 
-\paragraph{Within-MCMC ordering.} We impose ordering via cumulative sum reparameterization: $\lambda_k = \sum_{j=1}^{k} \delta_j$ with $\delta_j \sim \text{LogNormal}(\log(s_{\max}/(K+1)), 0.7)$, ensuring $\lambda_1 < \lambda_2 < \cdots < \lambda_K$. However, this approach may distort the posterior geometry.
+\paragraph{Within-MCMC ordering.} We impose $\lambda_1 < \lambda_2 < \cdots < \lambda_K$ via cumulative-sum reparameterization with positive increments $\delta_j \sim \text{LogNormal}(\log(s_{\max}/(K{+}1)), 0.7)$. This restricts the posterior to one canonical labelling but can distort posterior geometry near the boundary.
 
-\paragraph{Post-hoc relabeling.} We implement unconstrained sampling followed by post-hoc relabeling: after MCMC, samples are permuted so that $\lambda_1 < \lambda_2 < \cdots < \lambda_K$ at each iteration. This preserves detailed balance while enabling meaningful diagnostics.
+\paragraph{Post-hoc relabeling.} We additionally implement unconstrained sampling followed by post-hoc reordering: each posterior draw is permuted so that $\lambda_1 < \lambda_2 < \cdots < \lambda_K$ \citep{stephens2000label, papastamoulis2014label}. This preserves detailed balance and exposes interpretable per-component summaries.
 
-\paragraph{Label-invariant diagnostics.} We compute R-hat on three quantities: (1) the total log-likelihood (label-invariant by construction), (2) scalar parameters ($\alpha$, $\sigma$), and (3) relabeled component parameters. A model is considered converged when all three criteria yield R-hat $< 1.01$.
+\paragraph{Label-invariant diagnostics.} We compute $\widehat{R}$ and effective sample sizes on three groups of quantities \citep{vehtari2021rhat}:
+\begin{enumerate}
+    \item \emph{Joint log-likelihood} $\sum_t \log \sum_k \pi_k \phi(y_t \mid \mu_t^{(k)}, \sigma)$, which is label-invariant by construction.
+    \item \emph{Scalar parameters} ($\alpha$, $\sigma$, $\mu_0$, $\beta$) that are not affected by label permutations.
+    \item \emph{Relabeled component parameters}, after the post-hoc reordering above.
+\end{enumerate}
+A model is treated as effectively converged when all three pass: this is the criterion we use to report a ``publication-ready'' fit.
 
-\section{Experiments}
+\section{Synthetic Benchmark}
 
-We evaluate the proposed models primarily through synthetic experiments with known ground truth. Real-data checks are retained only as exploratory diagnostics in the current draft.
+\subsection{Data-Generating Processes}
 
-\subsection{Synthetic Data Experiments}
+We evaluate the models across three data-generating processes (DGPs): (1)~\emph{Single} ($K=1$), a single Hill response; (2)~\emph{Mixture~$K=2$}, a two-component mixture; and (3)~\emph{Mixture~$K=3$}, a three-component mixture. Each DGP uses $T = 200$ observations with a 75/25 train/test split. We run five random seeds per condition.
 
-\paragraph{Data generation.} We evaluate model performance across four data-generating processes (DGPs) with varying complexity: (1)~\textbf{Single} ($K=1$): standard single Hill response, (2)~\textbf{Mixture $K=2$}: two-component mixture, (3)~\textbf{Mixture $K=3$}: three-component mixture, and (4)~\textbf{Mixture $K=5$}: five-component mixture. Each DGP uses $T=200$ observations with a 75/25 train/test split. We run 5 random seeds per condition (80 total experiments).
+\subsection{Inference Configuration}
 
-\paragraph{Model comparison.} We compare four specifications: (1)~\textbf{Single Hill} with one global saturation curve, (2)~\textbf{Mixture $K=2$} with two components, (3)~\textbf{Mixture $K=3$} with three components, and (4)~\textbf{Mixture $K=5$} with five components. Inference uses NUTS with 1,000 warmup and 2,000 sampling iterations across 4 chains.
+Inference uses the No-U-Turn Sampler (NUTS) with model-specific warmup and sampling lengths and a stricter target acceptance probability for mixtures: $1{,}000$ warmup and $1{,}000$ samples per chain for single-Hill, $1{,}400$ and $1{,}000$ for $K=2$, and $2{,}200$ and $1{,}800$ for $K=3$, each with two chains. Holdout predictions inherit the adstock state accumulated during training and are evaluated at their absolute time index rather than reset to zero.
 
-\paragraph{Evaluation protocol.} Holdout predictions are generated sequentially: the test period inherits the adstock state accumulated during training and is evaluated at its absolute time index rather than being re-indexed to start at zero. This avoids an artificial reset of carryover and trend at the train/test boundary. We report ELPD-LOO as the primary predictive metric, with test RMSE and posterior latent-mean recovery as secondary checks.
+\subsection{Results}
 
-\paragraph{Results.} Seventy-nine of 80 synthetic runs satisfied the effective convergence criterion. The only miss was a Mixture $K=2$ fit under the true $K=3$ DGP, which remained above threshold after repeated retries. For single-Hill fits we require standard R-hat $< 1.05$; for mixture fits we require both label-invariant and relabeled diagnostics to satisfy the stricter $\widehat{R} < 1.01$ threshold.
+\paragraph{Convergence.} Under our combined criterion (HMC diagnostics, label-invariant $\widehat{R}$, and relabeled $\widehat{R}$), all $3 \times 3 \times 5 = 45$ synthetic fits passed the effective convergence threshold (Figure~\ref{fig:convergence}). Standard single-Hill diagnostics agreed with the mixture-specific label-invariant diagnostics on the synthetic data.
 
-Table~\ref{tab:synthetic_elpd} shows predictive performance across the representative model comparisons.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/fig4_convergence_heatmap.png}
+\caption{Effective convergence pass rate by DGP and model on the synthetic benchmark. All cells reach $100\%$.}
+\label{fig:convergence}
+\end{figure}
+
+\paragraph{Predictive performance.} Figures~\ref{fig:elpd} and~\ref{fig:crps} report ELPD-LOO and holdout CRPS. When the true DGP is homogeneous ($K=1$), the three models tie within standard error. When heterogeneity is present, mixtures gain substantially in ELPD ($\Delta \approx +50$ on $K=2$, $\Delta \approx +45$ on $K=3$). CRPS gains are noticeably smaller than ELPD gains ($\Delta \approx 0.1$ on $K=2$, $\Delta \approx 0.4$ on $K=3$), indicating that the bulk of the improvement is in probabilistic density rather than in point prediction.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/fig1_elpd_comparison.png}
+\caption{ELPD-LOO by DGP and model on the synthetic benchmark. Higher is better. Mixtures improve substantially when $K \geq 2$.}
+\label{fig:elpd}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/fig2_crps_comparison.png}
+\caption{Holdout CRPS by DGP and model on the synthetic benchmark. Lower is better. Gains are smaller in magnitude than ELPD gains.}
+\label{fig:crps}
+\end{figure}
+
+\paragraph{Latent recovery.} Figure~\ref{fig:latent_nrmse} shows latent-mean nRMSE on the test split. The pattern mirrors ELPD: mixtures roughly halve nRMSE under $K=2$ ($0.14 \to 0.07$) and reduce it by a factor of $\approx 2.4$ under $K=3$ when the model is matched to the true $K$ ($0.085 \to 0.035$). This shows that the ELPD gains correspond to genuinely better recovery of the latent response, not just better marginal calibration.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.7\textwidth]{figures/fig3_latent_nrmse_comparison.png}
+\caption{Latent-mean nRMSE by DGP and model. Lower is better. Mixtures recover the latent response more accurately when heterogeneity is present.}
+\label{fig:latent_nrmse}
+\end{figure}
+
+\section{Component Resolvability}
+
+The previous section shows that mixtures help when heterogeneity exists, but does not tell us \emph{how much} heterogeneity is required for the posterior to actually separate components. We address this with a controlled study.
+
+\subsection{Design}
+
+We construct nine DGP profiles by varying the spacing $\delta$ between true Hill half-points around a fixed centre $c$, holding amplitude and slope fixed. For $K_{\text{true}} = 1$ we use one anchor profile; for $K_{\text{true}} \in \{2,3\}$ we use four profiles each, spanning low to extreme separation. Each profile is run with five seeds and fit with both Mixture~$K=2$ and Mixture~$K=3$, for $9 \times 2 \times 5 = 90$ fits in total.
+
+\paragraph{Separation axis.} For each component $k$ we evaluate the Hill response curve on a fixed grid, compute the incremental mass $m_k$, and report the mean pairwise cosine distance
+\begin{equation}
+    \bar{d}_{\cos} = \binom{K}{2}^{-1} \sum_{i<j} \left(1 - \frac{m_i \cdot m_j}{\|m_i\| \, \|m_j\|}\right).
+\end{equation}
+
+\paragraph{Recovery axis.} We summarise posterior mixture weights $\hat\pi_k$ by the Shannon effective count (Hill number $q=1$) \citep{hill1973diversity}:
+\begin{equation}
+    {}^1\!D = \exp\!\Bigl(-\textstyle\sum_k \hat\pi_k \log \hat\pi_k\Bigr).
+\end{equation}
+
+\subsection{Results}
+
+Figure~\ref{fig:resolvability} plots ${}^1\!D$ against $\bar{d}_{\cos}$ across all 90 fits. Three regimes are visible:
+\begin{itemize}
+    \item For $\bar{d}_{\cos} \lesssim 0.05$, both models collapse toward the trivial value: even when $K_{\text{true}} \geq 2$, the posterior cannot resolve more than $\approx 1.5$--$1.7$ effective components.
+    \item Between $\bar{d}_{\cos} \approx 0.05$ and $0.3$, the recovered count rises sharply with separation: this is the resolvable transition region.
+    \item For $\bar{d}_{\cos} \gtrsim 0.3$, the recovered count saturates near $K_{\text{true}}$. Mixture~$K=2$ saturates near 2 by construction; Mixture~$K=3$ tracks the true $K$ and approaches 3 on $K=3$ DGPs.
+\end{itemize}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/component_resolvability/full/selected_metric_comparison.png}
+\caption{Component resolvability: Shannon effective count of the posterior versus mean pairwise cosine distance of the true Hill curves. Red-outlined points indicate cases that failed the publication-ready convergence criterion.}
+\label{fig:resolvability}
+\end{figure}
+
+\paragraph{Failure modes.} The publication-ready convergence criterion fails most frequently in two regimes. First, under-specified fits at low separation: Mixture~$K=2$ on $K_{\text{true}}=3$ DGPs at low $\delta$ shows publication-fail rates of $0.6$--$0.8$. Second, at the highest separation under $K_{\text{true}}=3$, Mixture~$K=3$ exhibits a non-trivial failure rate ($0.6$ at the most extreme profile), suggesting that the strict diagnostic criterion is sensitive to posterior geometry even when the components are far apart.
+
+\paragraph{Practical implication.} Combined with the ELPD results of Section~3, the resolvability picture suggests that mixture-of-Hill models can be used reliably when the cosine separation between true components exceeds $\approx 0.1$. Below this threshold, the posterior is consistent with a smaller effective $K$, and the modeller should expect both lower convergence pass rates and very limited information gain over a single-Hill baseline.
+
+\section{Real-Data Benchmark}
+
+\subsection{Dataset and Organisation Selection}
+
+We use the public Conjura MMM dataset, which contains daily spend across nine advertising channels and several purchase-related target variables for a panel of e-commerce organisations. Following the per-organisation modelling convention of MMM practice, we treat each organisation as an independent time series and do not share parameters across organisations.
+
+To select organisations for the benchmark, we screen all candidates with at least 200 daily observations and at least two active spend channels (non-zero on more than $10\%$ of days), and rank them by a composite score combining series length, spend coefficient of variation, spend--target correlation, and channel breadth. We pick three top-ranked organisations from three different verticals to support a modest cross-vertical claim. The selected organisations are summarised in Table~\ref{tab:orgs}.
 
 \begin{table}[ht]
 \centering
-\caption{Predictive performance on synthetic data (mean $\pm$ standard deviation across 5 seeds).}
-\label{tab:synthetic_elpd}
-\begin{tabular}{llccc}
+\caption{Selected Conjura organisations for the real-data benchmark.}
+\label{tab:orgs}
+\begin{tabular}{lrrrr}
 \toprule
-True $K$ & Model & ELPD-LOO & Test RMSE & $\Delta$ LOO vs Single \\
+Vertical & $T$ (days) & Active channels & Spend--target $r$ & Total spend (USD M) \\
 \midrule
-$K=1$ & Single Hill & $-382.4 \pm 11.9$ & $3.0 \pm 0.4$ & --- \\
-$K=1$ & Mixture $K=2$ & $-383.4 \pm 12.0$ & $3.0 \pm 0.4$ & $-1.1$ \\
-\addlinespace
-$K=2$ & Single Hill & $-386.7 \pm 7.5$ & $3.1 \pm 0.4$ & --- \\
-$K=2$ & Mixture $K=2$ & $-383.6 \pm 9.5$ & $3.2 \pm 0.4$ & $\mathbf{+3.2}$ \\
-$K=2$ & Mixture $K=3$ & $-383.8 \pm 9.3$ & $3.2 \pm 0.4$ & $+2.9$ \\
-\addlinespace
-$K=3$ & Single Hill & $-463.1 \pm 7.8$ & $4.9 \pm 0.4$ & --- \\
-$K=3$ & Mixture $K=3$ & $-452.7 \pm 8.7$ & $5.0 \pm 0.4$ & $\mathbf{+10.5}$ \\
-$K=3$ & Mixture $K=5$ & $-453.1 \pm 8.7$ & $5.0 \pm 0.4$ & $+10.0$ \\
-\addlinespace
-$K=5$ & Single Hill & $-463.8 \pm 8.4$ & $4.8 \pm 0.4$ & --- \\
-$K=5$ & Mixture $K=3$ & $-445.6 \pm 5.9$ & $4.8 \pm 0.3$ & $+18.1$ \\
-$K=5$ & Mixture $K=5$ & $-445.6 \pm 5.4$ & $4.8 \pm 0.3$ & $\mathbf{+18.2}$ \\
+Toys \& Hobbies     & 1{,}375 & 5 & 0.95 & 3.3 \\
+Beauty \& Fitness   &    924  & 8 & 0.96 & 5.2 \\
+Home \& Garden      & 1{,}642 & 5 & 0.80 & 2.1 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-When the true DGP is simple ($K=1$), mixture models incur only a marginal ELPD penalty. For heterogeneous data ($K \geq 2$), the mixture family becomes decisively better, and the gain increases with true complexity. The strongest improvements appear in ELPD rather than RMSE, which suggests that mixture models primarily improve probabilistic calibration rather than only point prediction.
+\subsection{Inference Configuration}
 
-Latent-mean recovery adds an important nuance. For the simpler DGPs ($K=1,2$), the matched mixture achieves test $\mu$ RMSE below 1.0 with 90\% coverage between 0.81 and 1.00. For the harder $K=3$ and $K=5$ DGPs, the matched mixture still wins on ELPD, but test $\mu$ RMSE remains around 4.1 and 90\% coverage drops to roughly 0.22--0.25. In other words, predictive density improves before latent-state uncertainty becomes well calibrated in the highest-heterogeneity settings.
+Each organisation is fit with three models---single-Hill, Mixture~$K=2$, and Mixture~$K=3$---under three seeds, giving 27 fits in total. Warmup and sampling are set to $(600,600)$, $(900,900)$, and $(1{,}600,1{,}200)$ for single-Hill, $K=2$, and $K=3$ respectively, with two chains each and target acceptance increased for larger mixtures. The 75/25 train/test split preserves adstock state and absolute time index as in the synthetic benchmark.
 
-The synthetic benchmark also exposes a useful model-selection pattern. The mixture model with the correct $K$ tends to win on ELPD, but modest over-specification remains competitive because excess components are only partially used. This is encouraging for practice: slight over-specification appears less harmful than enforcing a single saturation curve when the truth is heterogeneous.
+\subsection{Predictive Performance}
 
-\subsection{Exploratory Real-Data Check}
+Table~\ref{tab:real_predictive} reports ELPD-LOO, holdout MAPE, holdout CRPS, and holdout 90\% coverage averaged across seeds. The key observation is that \emph{Mixture~$K=3$ achieves the best ELPD-LOO in every organisation}, with improvements of $+222$ (beauty \& fitness), $+308$ (home \& garden), and $+275$ (toys \& hobbies) over the single-Hill baseline. Mixture~$K=2$ is intermediate.
 
-We retain a preliminary real-data benchmark on the Conjura MMM dataset only as an exploratory check. At the current stage, organization selection, preprocessing, and covariate construction are still under refinement, and many runs exhibit poor PSIS-LOO diagnostics and strong seed sensitivity. We therefore do not use the real-data results as confirmatory evidence in this paper. Their present role is limited to stress-testing the implementation and identifying the next methodological bottlenecks for future work.
+\begin{table}[ht]
+\centering
+\caption{Real-data predictive performance, averaged across three seeds. ELPD-LOO higher is better; MAPE/CRPS lower is better; 90\% coverage closer to $0.9$ is better.}
+\label{tab:real_predictive}
+\begin{tabular}{llrrrr}
+\toprule
+Organisation & Model & ELPD-LOO & Test MAPE & Test CRPS & 90\% cov.\ \\
+\midrule
+Beauty \& Fitness  & Single Hill    & $-3{,}008$ & $30.3$ & $108$  & $0.33$ \\
+                   & Mixture $K=2$ & $-2{,}992$ & $29.6$ & $101$  & $0.37$ \\
+                   & Mixture $K=3$ & $\mathbf{-2{,}786}$ & $34.3$ & $122$ & $0.54$ \\
+\addlinespace
+Home \& Garden     & Single Hill    & $-6{,}168$ & $26.0$ & $25.0$ & $0.87$ \\
+                   & Mixture $K=2$ & $-5{,}985$ & $31.4$ & $27.2$ & $0.88$ \\
+                   & Mixture $K=3$ & $\mathbf{-5{,}860}$ & $28.2$ & $25.9$ & $0.86$ \\
+\addlinespace
+Toys \& Hobbies    & Single Hill    & $-6{,}379$ & $36.4$ & $57.3$ & $0.94$ \\
+                   & Mixture $K=2$ & $-6{,}346$ & $29.3$ & $53.5$ & $0.98$ \\
+                   & Mixture $K=3$ & $\mathbf{-6{,}104}$ & $34.3$ & $47.3$ & $0.96$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The relationship between ELPD and the other metrics is heterogeneous. On \emph{home \& garden} the rank ordering of models is consistent across ELPD, CRPS, and MAPE: the mixture improves all three. On \emph{toys \& hobbies}, ELPD and CRPS both improve, while MAPE is non-monotonic. On \emph{beauty \& fitness}, ELPD improves substantially but MAPE and CRPS deteriorate slightly for $K=3$, and the model remains visibly underconfident: 90\% coverage rises from $0.33$ (single) to $0.54$ ($K=3$) but stays well below the nominal level, indicating that the predictive intervals are too narrow even for the best fit. We return to this in the discussion.
+
+\subsection{Convergence on Real Data}
+
+Table~\ref{tab:real_convergence} summarises the rate at which each (organisation, model) cell passes the publication-ready convergence criterion (HMC diagnostics plus label-invariant and relabeled $\widehat{R}$) across the three seeds. Two patterns are stark.
+
+\begin{table}[ht]
+\centering
+\caption{Real-data convergence pass rates (publication-ready criterion across three seeds), posterior mean effective $K$, and mean number of LOO observations with Pareto $k > 0.7$.}
+\label{tab:real_convergence}
+\begin{tabular}{llrrr}
+\toprule
+Organisation & Model & Pub.\ pass rate & Effective $K$ & Pareto $k$ bad (mean) \\
+\midrule
+Beauty \& Fitness  & Single Hill    & $0.67$ & $1.00$ & $1.7$  \\
+                   & Mixture $K=2$ & $0.00$ & $1.65$ & $15.0$ \\
+                   & Mixture $K=3$ & $0.00$ & $2.17$ & $3.3$  \\
+\addlinespace
+Home \& Garden     & Single Hill    & $0.67$ & $1.00$ & $0.7$ \\
+                   & Mixture $K=2$ & $0.33$ & $1.94$ & $0.7$ \\
+                   & Mixture $K=3$ & $0.00$ & $2.00$ & $1.7$ \\
+\addlinespace
+Toys \& Hobbies    & Single Hill    & $1.00$ & $1.00$ & $2.7$ \\
+                   & Mixture $K=2$ & $0.67$ & $2.00$ & $1.7$ \\
+                   & Mixture $K=3$ & $0.00$ & $2.45$ & $3.3$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+First, \emph{Mixture~$K=3$ passes the publication-ready criterion in $0/9$ fits} on real data, despite passing in $100\%$ of the synthetic fits at matched $K$. Second, the posterior mean effective $K$ saturates near 2 for all three organisations: even Mixture~$K=3$ recovers no more than $\approx 2.5$ effective components. The mixture model does extract additional structure relative to a single curve, but the data do not warrant three distinct components under our diagnostic criterion.
+
+The high Pareto-$k$ count for the beauty \& fitness Mixture~$K=2$ fit (15 observations on average) is consistent with a moderately misspecified model on data with influential outliers, and points to robustifying the likelihood as a useful next step.
 
 \section{Discussion}
 
-The synthetic benchmark establishes a clean and asymmetric result: the single-Hill model is preferred when the data are truly homogeneous, but the penalty for fitting a small mixture is minor; when heterogeneity is present, the single-curve restriction becomes clearly suboptimal and mixture models gain predictive density rapidly as true complexity increases.
+\paragraph{Mixture helps, but mainly in predictive density.} Across both synthetic and real data, the most consistent benefit of mixture-of-Hill over single-Hill is in ELPD-LOO. The CRPS gains are smaller, and improvements in MAPE are organisation-specific. This pattern---predictive density improves first---is consistent with the view that mixtures primarily improve probabilistic calibration and uncertainty representation rather than mean prediction. A practitioner whose objective is point forecasting may gain little; a practitioner who needs calibrated predictive intervals for budget decisions gains more.
 
-\paragraph{Standard MMM vs Mixture Models.} The central finding is therefore not that one fixed $K$ dominates everywhere, but that the mixture family is the correct modeling language once heterogeneous saturation is plausible. In the current benchmark, the correct-$K$ mixture typically wins on ELPD, while simpler or slightly over-specified mixtures often remain close. Standard MMM remains a strong baseline for homogeneous settings, but it cannot represent multi-segment response curves.
+\paragraph{The synthetic--real diagnostic gap.} The publication-ready convergence criterion that passes on $100\%$ of synthetic fits fails on $0/9$ Mixture~$K=3$ fits on real data. This is not a contradiction: synthetic data are generated within the model class, with controlled noise and stationary mixing weights. Real organisations exhibit additional structure---seasonality, regime shifts, channel-mix changes, and outliers---that the within-model strict criterion is sensitive to. We report this gap rather than relaxing the criterion, because the gap itself is one of the most informative findings: it tells practitioners that synthetic-benchmark convergence does not automatically transfer.
 
-\paragraph{Component selection trade-offs.} The choice of $K$ is best understood as a trade-off between expressiveness and simplicity. Larger $K$ helps when the DGP is genuinely heterogeneous, especially in predictive density, but the incremental benefit in RMSE is smaller. This suggests that additional components mostly improve uncertainty quantification and distributional fit rather than only mean prediction. At the same time, latent-state recovery is a stricter target than predictive density: in the $K \geq 3$ DGPs, matched mixtures still dominate ELPD, but 90\% test-$\mu$ coverage remains far below nominal.
+\paragraph{Effective $K$ saturates near 2.} Across all three organisations, even the $K=3$ model recovers no more than $\approx 2.5$ effective components in the posterior. Combined with the resolvability evidence that components are only identifiable when the true cosine separation exceeds $\approx 0.1$, this is best read as a soft upper bound for this kind of dataset: with weekly-to-daily aggregated spend at the organisation level, two latent saturation modes are about as much structure as the data can support.
 
-\paragraph{Relabeling as a diagnostic tool.} Post-hoc relabeling remains important even in a synthetic suite with strong convergence. Its main value is not to manufacture convergence, but to keep diagnostics interpretable and to separate genuine non-identifiability from label permutations. For mixture MMM, reporting only parameter-level R-hat without a label-invariant check is not sufficient.
+\paragraph{Beauty \& Fitness as a cautionary case.} The Beauty \& Fitness organisation has the strongest mixture-versus-single ELPD gap but also the most striking calibration failure: 90\% holdout coverage rises from $0.33$ to $0.54$ across models but never approaches the nominal level. The high Pareto-$k$ count further indicates influential observations. The honest reading is that the mixture is doing real work but is still not a sufficient model for this organisation, and that a heavier-tailed likelihood or richer observation model would be needed before deploying it for decisions.
 
-\paragraph{When to use Standard vs Mixture MMM.} The choice between standard and mixture models depends on the application context and data characteristics:
-\begin{itemize}
-    \item \textbf{Standard MMM} is appropriate when (a) consumer response is plausibly homogeneous, (b) a single interpretable curve is preferred, or (c) the application does not justify mixture complexity.
-    \item \textbf{Mixture MMM} is appropriate when (a) heterogeneous saturation is substantively plausible, (b) predictive density and uncertainty quantification matter, or (c) segment-specific response curves are part of the scientific question.
-\end{itemize}
-Our experiments suggest that small mixtures incur only modest penalty when heterogeneity is absent, but practitioners should still weigh that robustness against the simpler interpretation of a single-curve model.
+\paragraph{Identifiability caveat.} As \citet{dew2024mmm} note, nonlinear and time-varying effects in MMM are jointly under-identified from typical observational time series. Our mixture-of-Hill model does not resolve this concern; it offers a controlled extension of the standard family in which the source of nonlinearity (heterogeneity, in this case) is at least made explicit. Stronger causal claims would require external variation, such as geo-experiments or incrementality tests.
 
-\paragraph{Practical recommendations for mixture models.}
-\begin{enumerate}
-    \item Start with Single Hill and Mixture $K=2$ as the minimum comparison set.
-    \item Escalate to larger $K$ only when predictive-density gains justify the additional complexity.
-    \item Always evaluate holdout predictions sequentially, preserving adstock state and absolute time index across the split.
-    \item Always report label-invariant and relabeled diagnostics for mixture models.
-\end{enumerate}
-
-\paragraph{Limitations.} Our approach assumes segment membership is constant over time, which may not hold during product launches or competitive shifts. The current synthetic suite is deliberately in-model and single-channel, so it does not yet probe robustness to misspecification, multiple media channels, or aggressive prior mismatch. The mixture structure also increases computational cost compared to single-curve models. Finally, the real-data benchmark is still exploratory; stronger claims will require more disciplined preprocessing and broader external validation.
+\paragraph{Limitations.} We aggregate spend across channels into a single $x_t$ in both benchmarks, which simplifies inference but loses cross-channel information. The model assumes constant mixing weights over time. The real-data evaluation covers three organisations and three verticals; cross-organisation generalisation claims would require a substantially larger panel. Finally, the prior on $\lambda$ depends on the empirical spend range; this is convenient but couples prior to data in a way that should be made explicit in any deployment.
 
 \section{Conclusion}
 
-We presented a Bayesian mixture of Hill saturation functions as an alternative to standard single-curve Marketing Mix Models. Our central finding is that mixture models offer a principled approach to capturing heterogeneous consumer response---a capability fundamentally absent from traditional MMM implementations.
+We presented a Bayesian mixture of Hill saturation functions for Marketing Mix Modeling, together with a label-invariant diagnostic workflow and three complementary benchmarks: a synthetic comparison under known ground truth, a component-resolvability study quantifying when components can be separated, and a real-data evaluation across three organisations in distinct verticals. Mixture-of-Hill consistently improves ELPD-LOO under heterogeneity, both synthetic and real, with mean improvements of $+222$ to $+308$ over single-Hill on the real organisations. The improvements appear primarily in predictive density rather than point prediction. The most important caveat is methodological: the strict publication-ready convergence criterion that succeeds uniformly on synthetic data fails uniformly for Mixture~$K=3$ on real data, and the posterior effective $K$ saturates near 2. We interpret this gap as a directly useful finding for practitioners deploying mixture MMMs, not as a weakness to be sanded away. Code and per-case artifacts are available at \url{https://github.com/jpcca/marketing-mix-modelling}.
 
-In a controlled synthetic benchmark, mixture models improve ELPD whenever the true response is heterogeneous, with gains that grow with latent complexity, while paying only a small penalty when the population is homogeneous. This makes the mixture formulation a credible benchmark for studying heterogeneous saturation effects under known ground truth.
-
-Our methodological contribution---label-invariant diagnostics with post-hoc relabeling and sequential holdout evaluation---addresses two practical barriers to studying mixture MMMs: interpreting convergence and evaluating out-of-sample predictions without resetting latent state. These details matter because they determine whether predictive comparisons are scientifically meaningful. The updated synthetic benchmark also shows an important boundary: predictive gains do not automatically imply calibrated latent-state uncertainty in the most heterogeneous settings.
-
-The choice of mixture complexity ($K$) should be guided by data characteristics and application requirements. Larger $K$ captures richer heterogeneity, but the main benefit appears first in predictive density rather than RMSE. Rather than prescribing a single ``best'' $K$, we recommend practitioners compare a small set of models, monitor label-invariant diagnostics, and treat current real-data evidence as exploratory until data preparation is better standardized.
-
-Implementation in NumPyro with automatic prior scaling and comprehensive diagnostics provides a practical tool for practitioners. Code and data are available at \url{https://github.com/jpcca/marketing-mix-modelling}.
-
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -183,11 +294,28 @@ Ryan Dew, Nicolas Padilla, and Anya Shchetkina.
   effects in marketing mix models.
 \newblock \emph{arXiv preprint arXiv:2408.07678}, 2024.
 
+\bibitem[Fr\"uhwirth-Schnatter(2006)]{fruhwirth2006finite}
+Sylvia Fr\"uhwirth-Schnatter.
+\newblock \emph{Finite Mixture and Markov Switching Models}.
+\newblock Springer, 2006.
+
+\bibitem[Hill(1973)]{hill1973diversity}
+M.~O. Hill.
+\newblock Diversity and evenness: A unifying notation and its consequences.
+\newblock \emph{Ecology}, 54\penalty0 (2):\penalty0 427--432, 1973.
+
 \bibitem[Jin et~al.(2017)Jin, Wang, Sun, Chan, and Koehler]{jin2017bayesian}
 Yuehan Jin, Yuxue Wang, Yunting Sun, David Chan, and Jim Koehler.
 \newblock Bayesian methods for media mix modeling with carryover and shape
   effects.
 \newblock \emph{Google Research White Paper}, 2017.
+
+\bibitem[Papastamoulis(2014)]{papastamoulis2014label}
+Panagiotis Papastamoulis.
+\newblock \texttt{label.switching}: An {R} package for dealing with the label
+  switching problem in {MCMC} outputs.
+\newblock \emph{Journal of Statistical Software}, 69\penalty0 (1):\penalty0
+  1--24, 2014.
 
 \bibitem[Phan et~al.(2019)Phan, Pradhan, and Jankowiak]{phan2019composable}
 Du~Phan, Neeraj Pradhan, and Martin Jankowiak.
@@ -195,16 +323,18 @@ Du~Phan, Neeraj Pradhan, and Martin Jankowiak.
   programming in {NumPyro}.
 \newblock \emph{arXiv preprint arXiv:1912.11554}, 2019.
 
-\bibitem[{PyMC Labs}(2025)]{pymc2025benchmark}
-{PyMC Labs}.
-\newblock {PyMC-Marketing} vs.\ {Meridian}: A quantitative comparison of open source
-  {MMM} libraries.
-\newblock Technical report, PyMC Labs, September 2025.
+\bibitem[Stephens(2000)]{stephens2000label}
+Matthew Stephens.
+\newblock Dealing with label switching in mixture models.
+\newblock \emph{Journal of the Royal Statistical Society: Series B}, 62\penalty0 (4):\penalty0 795--809, 2000.
 
-\bibitem[Vehtari et~al.(2021)Vehtari, Gelman, Simpson, Carpenter, and B\"urkner]{vehtari2021rhat}
-Aki Vehtari, Andrew Gelman, Daniel Simpson, Bob Carpenter, and Paul-Christian B\"urkner.
-\newblock Rank-normalization, folding, and localization: An improved $\widehat{R}$ for assessing convergence of {MCMC}.
-\newblock \emph{Bayesian Analysis}, 16(2):667--718, 2021.
+\bibitem[Vehtari et~al.(2021)Vehtari, Gelman, Simpson, Carpenter, and
+  B\"urkner]{vehtari2021rhat}
+Aki Vehtari, Andrew Gelman, Daniel Simpson, Bob Carpenter, and Paul-Christian
+  B\"urkner.
+\newblock Rank-normalization, folding, and localization: An improved
+  $\widehat{R}$ for assessing convergence of {MCMC}.
+\newblock \emph{Bayesian Analysis}, 16\penalty0 (2):\penalty0 667--718, 2021.
 
 \bibitem[Wedel and Kamakura(2000)]{wedel2000market}
 Michel Wedel and Wagner~A. Kamakura.
