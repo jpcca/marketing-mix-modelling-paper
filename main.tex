@@ -8,6 +8,7 @@
 \usepackage{hyperref}
 \usepackage{natbib}
 \usepackage{graphicx}
+\usepackage[section]{placeins}
 
 \title{Bayesian Hill Mixture Models for Marketing Mix Modeling:\\
 Synthetic Benchmarks, Component Resolvability, and Real-Data Evaluation}
@@ -264,7 +265,7 @@ Table~\ref{tab:real_convergence} summarises the rate at which each (organisation
 
 \begin{table}[ht]
 \centering
-\caption{Per-cell convergence (publication-ready pass rate over three seeds), Shannon effective count $^1\!D_{\text{post}}$ evaluated at the posterior mean of $\hat\pi$, active component count $K_{\text{active}}$ (components with posterior mean weight $> 1/(2K)$, averaged over seeds), Pareto-$\hat k > 0.7$ counts (mean/max), and posterior mean pairwise cosine separation between active Hill components (Section~\ref{sec:real-resolvability}). $^1\!D_{\text{post}}$ and $K_{\text{active}}$ can disagree on imbalanced mixtures, as discussed in the main text.}
+\caption{Per-cell convergence and component-summary diagnostics for the real-data benchmark. Columns are defined in Sections~\ref{sec:setup} and~\ref{sec:real-resolvability}.}
 \label{tab:real_convergence}
 \begin{tabular}{llrrrrr}
 \toprule
@@ -400,7 +401,7 @@ Table~\ref{tab:priors} lists the priors actually used by the implementation. Two
 Parameter & Distribution & Notes \\
 \midrule
 Adstock decay $\alpha$ & $\text{Beta}(2, 2)$ & shared across components \\
-Stick proportions $v_k$ ($k\le K{-}1$) & $\text{Beta}(a, b)$ & default $(a,b)=(1,1)$; $\pi_k = v_k \prod_{j<k}(1{-}v_j)$ \\
+Stick proportions $v_k$ ($k\le K{-}1$) & $\text{Beta}(a, b)$ & $(a,b)=(3,1)$ for $K=2$, $(3, 1.5)$ for $K=3$; $\pi_k = v_k \prod_{j<k}(1{-}v_j)$ \\
 Hier.\ log-amplitude location $\mu_{\log A}$ & $\mathcal{N}(\log(0.3 \cdot \widehat{\text{range}}(y)),\ 0.5)$ & shared across $k$ \\
 Hier.\ log-amplitude scale $\sigma_{\log A}$ & $\text{LogNormal}(\ell_A, s_A)$ & per-experiment $\ell_A, s_A$ \\
 Per-component $\log A_k$ & $\mathcal{N}(\mu_{\log A} + a^{\text{anch}}_k,\ \sigma_{\log A})$ & non-centred; $a^{\text{anch}}_k$ is an optional anchor (Notes) \\
@@ -410,13 +411,13 @@ Per-component $\log n_k$ & $\mathcal{N}(\mu_{\log n} + n^{\text{anch}}_k,\ \sigm
 Anchor $\log \lambda_1$ & $\mathcal{N}(\log \text{quantile}_{q_1}(s),\ s_{\text{anch}})$ & $q_k$ are equispaced quantiles \\
 Anchor increments $\log \lambda_{k+1} - \log \lambda_k$ & ordered, anchored to $\text{quantile}_{q_{k+1}}(s) - \text{quantile}_{q_k}(s)$ & strictly positive; perturbation scale $s_{\text{inc}}$ \\
 Intercept $\mu_0$ & $\mathcal{N}(\bar{y},\ 2\hat\sigma_y)$ & data-anchored \\
-Trend $\beta$ & $\mathcal{N}(0, 0.5)$ & on standardised $t$ \\
+Trend $\beta$ & $\mathcal{N}(0, \hat\sigma_y)$ & on standardised $t$; fallback $\hat\sigma_y \to 5$ \\
 Observation noise $\sigma$ & $\text{HalfNormal}(\hat\sigma_y)$ & data-anchored \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent The anchor terms $a^{\text{anch}}_k, n^{\text{anch}}_k$ provide a soft ordering of components in $(A, n)$ space, used to stabilise mixing on data with weakly identified mixtures; they are zero by default and non-zero on the synthetic Mixture~$K=2$ / $K=3$ benchmarks. Exact constants $(\ell_A, s_A, \ell_n, s_n, s_{\text{anch}}, s_{\text{inc}})$ and anchor strengths used per experiment are reproduced in \texttt{src/hill\_mixture\_mmm/models.py} and the per-fit JSON summaries.
+\noindent The anchor terms $a^{\text{anch}}_k, n^{\text{anch}}_k$ provide a soft ordering of components in $(A, n)$ space, used to stabilise mixing on weakly identified mixtures. They are controlled by a single scalar $\rho_K$ with implementation defaults $\rho_2 = 0.8$ and $\rho_3 = 0.7$, applied to \emph{all reported Mixture~$K=2$ and Mixture~$K=3$ fits} (both synthetic and real). For $K=2$ the increment construction is $\log\lambda_2 - \log\lambda_1 = (\log q_2 - \log q_1) + s_{\text{inc}} \cdot |z|$ with $z \sim \mathcal{N}(0,1)$, ensuring strict positivity; for $K=3$ the construction is $\log\lambda_{k+1} - \log\lambda_k = \max(\log q_{k+1} - \log q_k + s_{\text{inc}} \cdot z_k,\ 10^{-3})$, where $z_k \sim \mathcal{N}(0,1)$ and $q_1, q_2, q_3$ are equispaced quantiles of the adstocked spend. Exact constants $(\ell_A, s_A, \ell_n, s_n, s_{\text{anch}}, s_{\text{inc}})$ used per experiment are reproduced in \texttt{src/hill\_mixture\_mmm/models.py} and in each per-fit JSON summary under \texttt{fit\_summary}.
 
 \section{Synthetic DGP Parameters}
 \label{app:dgp}
