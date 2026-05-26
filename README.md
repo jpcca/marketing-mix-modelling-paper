@@ -2,48 +2,53 @@
 
 ## Overview
 
-This folder contains the research paper documenting the Bayesian Hill Mixture Model for Marketing Mix Modeling implemented in this repository.
+This folder contains the preprint manuscript on a Bayesian **predictive mixture** of Hill saturation functions for Marketing Mix Modeling, implemented in the parent repository. The canonical text is `main.tex`; `hill_mixture_mmm_paper.md` is a **legacy draft from an earlier framing of the project and is no longer accurate** (see below).
 
-## Goal
+## Scope
 
-Standard Marketing Mix Models assume all consumers respond identically to marketing spend. This paper proposes a **mixture of Hill saturation functions** to capture heterogeneous response patterns across latent consumer segments, addressing:
+The paper is a preprint that reports what we tested and what we did not. The empirical scope is deliberately narrow:
 
-- **Segment heterogeneity**: Different consumer groups (heavy vs. light buyers, loyalists vs. switchers) exhibit different saturation curves
-- **Model misspecification**: Aggregate response curves mask segment-specific behaviors
-- **Identifiability**: Label-invariant diagnostics and post-hoc relabeling make mixture posteriors interpretable
+- All experiments (synthetic and real-data) use a **single aggregated spend proxy** `x_t = sum_c x_{c,t}` rather than channel-level mixtures. The mixture is over saturation curves on that one-dimensional aggregate, not within each channel.
+- The model is a **predictive mixture over the observation likelihood**, not a model of latent consumer segments. The aggregated daily resolution of standard MMM cannot identify individual-level structure, and we do not claim it does.
+- The real-data evaluation covers **three organisations from three verticals** of one e-commerce dataset (Conjura). This is enough to expose the synthetic-versus-real diagnostic gap but is not a cross-organisation generalisation study.
 
-## Key Contributions
+The Discussion section is explicitly structured as **What worked / What did not transfer / What we did not test**, and the Scope and Limitations section consolidates the empirical and interpretive scope choices.
 
-1. **Bayesian mixture framework** combining Hill saturation with latent segment membership
-2. **Automatic prior scaling** from training data for diverse scales
-3. **Sequential holdout evaluation** that preserves adstock state and absolute time index
-4. **NumPyro/JAX implementation** for practical Bayesian inference
+## What is in the manuscript
+
+1. A controlled synthetic benchmark (3 DGPs × 3 models × 5 seeds = 45 fits) where the DGP is itself a Hill mixture.
+2. A component-resolvability sweep (9 profiles × 2 mixture models × 5 seeds = 90 fits) characterising recovery as a function of true cosine separation between component curves.
+3. A real-data benchmark on three Conjura organisations (3 orgs × 3 models × 3 seeds = 27 fits), paired with a re-use of the resolvability axis on the real posteriors.
 
 ## Relationship to Code
 
-| Paper Section | Implementation |
-|---------------|----------------|
-| Model Specification (§2) | `../src/hill_mixture_mmm/models.py` |
-| Data Generation (§3) | `../src/hill_mixture_mmm/data.py` |
-| Inference and diagnostics | `../src/hill_mixture_mmm/inference.py` |
-| Benchmarking | `../scripts/run_benchmark.py` |
+| Paper section | Implementation |
+|---|---|
+| Model Specification (§3) | `../src/hill_mixture_mmm/models.py` |
+| Data generation (§5, Appendix C) | `../src/hill_mixture_mmm/data.py` |
+| Inference and diagnostics (§3.1, §4) | `../src/hill_mixture_mmm/inference.py` |
+| Synthetic benchmark (§5) | `../scripts/run_benchmark.py` |
+| Component resolvability (§6) | `../scripts/run_component_resolvability_sweep.py` |
+| Real-data benchmark (§7) | `../scripts/run_real_data_validation.py`, `../scripts/summarize_real_benchmark.py` |
+| Posterior cosine separation (§7.4) | `../scripts/compute_posterior_separation.py` |
+| Paper figures | `../src/hill_mixture_mmm/paper_figures.py`, `../scripts/build_real_paper_figures.py` |
 
 ## Files
 
 | File | Description |
-|------|-------------|
-| `main.tex` | Canonical manuscript source |
-| `hill_mixture_mmm_paper.md` | Legacy Markdown draft retained for reference |
+|---|---|
+| `main.tex` | Canonical manuscript source (preprint) |
+| `main.pdf` | Compiled PDF (rebuilt locally) |
 | `references.bib` | BibTeX bibliography |
-| `main.pdf` | Compiled output (when built locally) |
+| `figures/` | Per-fit JSON summaries and rendered figures |
+| `hill_mixture_mmm_paper.md` | **Obsolete legacy draft** — predates the predictive-mixture reframing and the real-data benchmark; retained only for git history. Do not cite. |
 
 ## Compilation
 
-### Requirements
-
-- [Pandoc](https://pandoc.org/installing.html) (2.11+)
-- XeLaTeX (via TeX Live, MacTeX, or MiKTeX)
-
-### Build PDF
+Requirements: TeX Live or MacTeX with `pdflatex` and `bibtex`.
 
     latexmk -pdf main.tex
+
+or equivalently
+
+    pdflatex main.tex && bibtex main && pdflatex main.tex && pdflatex main.tex

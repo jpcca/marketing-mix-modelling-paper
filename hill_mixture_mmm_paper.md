@@ -13,7 +13,22 @@ header-includes:
   - \usepackage{booktabs}
 ---
 
-> Note: `main.tex` is the canonical manuscript. This Markdown file is a legacy draft kept for reference and may not match the latest benchmark results or paper structure.
+> # ⚠️ Obsolete draft — do not cite
+>
+> This file is a **legacy January 2026 draft** that predates the project's
+> current direction. The canonical manuscript is `main.tex` (preprint, May 2026).
+>
+> Specifically, the framing in this file ("heterogeneous consumer response",
+> "latent consumer segments", segment-specific parameters) has been
+> **withdrawn**. The current paper interprets the model as a **predictive
+> mixture over the observation likelihood**, not as a model of consumer
+> segments, and emphasises that aggregate daily MMM data cannot identify
+> individual-level structure. The numerical results, the inference
+> configuration, the real-data benchmark, and the discussion structure
+> in this file are also out of date.
+>
+> This file is retained only because it is referenced from earlier git
+> history. Refer to `main.tex` / `main.pdf` for the current claims.
 
 # 1. Introduction
 
