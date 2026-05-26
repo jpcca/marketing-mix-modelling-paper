@@ -77,18 +77,18 @@ with maximum effect $A_k$, half-saturation point $\lambda_k$, and slope $n_k \si
 \begin{equation}
     y_t \sim \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}\!\left(\mu_0 + \beta t + f_k(s_t),\, \sigma^2\right),
 \end{equation}
-where $\pi \sim \text{Dirichlet}(\mathbf{1}_K)$ and $\mu_0, \beta$ capture intercept and trend.
+where $\mu_0, \beta$ capture intercept and trend, and $\pi = (\pi_1, \ldots, \pi_K)$ is constructed by a stick-breaking parameterisation $\pi_k = v_k \prod_{j<k}(1-v_j)$ with $v_k \sim \text{Beta}(a, b)$ (see Appendix~\ref{app:priors} for the exact $(a, b)$ used).
 
-\paragraph{Automatic prior scaling.} To accommodate diverse data scales, priors on $A_k$, $\mu_0$, and $\sigma$ are computed from training-data statistics: $A_k \sim \text{LogNormal}(\log(0.3 \cdot \text{range}(y)), 0.8)$, $\mu_0 \sim \mathcal{N}(\bar{y}, 2\sigma_y)$, $\sigma \sim \text{HalfNormal}(\sigma_y)$.
+\paragraph{Hierarchical, data-anchored priors.} To accommodate diverse data scales we use mildly hierarchical, data-anchored priors rather than a single LogNormal on $(A_k, n_k)$: per-component $(\log A_k, \log n_k)$ are drawn from a Normal with shared location $\mu_{\log A}, \mu_{\log n}$ and component-wise scales $\sigma_{\log A}, \sigma_{\log n}$, with $\mu_{\log A}$ centred on $\log(0.3 \cdot \text{range}(y))$. The intercept and noise priors $\mu_0 \sim \mathcal{N}(\bar{y}, 2\sigma_y)$, $\sigma \sim \text{HalfNormal}(\sigma_y)$ are data-anchored in the same spirit. The full prior specification, including all hyperparameters, is in Appendix~\ref{app:priors}.
 
 \subsection{Identifiability and Label Switching}
 \label{sec:identifiability}
 
 A finite mixture is invariant under permutations of component labels: any reordering of $(\pi_k, A_k, \lambda_k, n_k)$ yields the same likelihood. As a result, posterior summaries computed per component are meaningless without an additional convention, and standard split-$\widehat{R}$ on raw component parameters cannot distinguish genuine non-mixing from label permutations across chains \citep{stephens2000label, fruhwirth2006finite}.
 
-\paragraph{Within-MCMC ordering.} We impose $\lambda_1 < \lambda_2 < \cdots < \lambda_K$ via cumulative-sum reparameterization with positive increments $\delta_j \sim \text{LogNormal}(\log(s_{\max}/(K{+}1)), 0.7)$. This restricts the posterior to one canonical labelling but can distort posterior geometry near the boundary.
+\paragraph{Within-MCMC ordering with data anchors.} The reported fits impose $\lambda_1 < \lambda_2 < \cdots < \lambda_K$ during sampling via an ordered reparameterisation: $\log \lambda_1$ is anchored at a low quantile of the observed adstock $\hat\lambda_1 = \text{quantile}_{q_1}(s)$ and the remaining $\log \lambda_k$ are obtained by adding strictly positive increments around anchor gaps derived from higher quantiles $q_2, \ldots, q_K$ of $s$ (Appendix~\ref{app:priors}). This restricts the posterior to one canonical labelling and stabilises mixing relative to a flat ordered-LogNormal prior, at the cost of mild posterior geometry distortion near the anchors.
 
-\paragraph{Post-hoc relabeling.} We additionally implement unconstrained sampling followed by post-hoc reordering: each posterior draw is permuted so that $\lambda_1 < \lambda_2 < \cdots < \lambda_K$ \citep{stephens2000label, papastamoulis2014label}. This preserves detailed balance and exposes interpretable per-component summaries.
+\paragraph{Post-hoc relabeling for summaries.} Per-component posterior summaries are additionally reported after a post-hoc reordering of each draw to $\lambda_1 < \cdots < \lambda_K$ \citep{stephens2000label, papastamoulis2014label}. The within-MCMC ordering and post-hoc relabeling are not used as competing strategies; the in-sampler ordering is the primary identification mechanism, and post-hoc relabeling is applied to the resulting draws when computing the component-wise diagnostics below.
 
 \paragraph{Label-invariant diagnostics.} We compute $\widehat{R}$ and effective sample sizes on three groups of quantities \citep{vehtari2021rhat}:
 \begin{enumerate}
@@ -107,7 +107,7 @@ A model is treated as effectively converged when all three pass; this is the cri
 
 \paragraph{Evaluation metrics.} We report (i) expected log pointwise predictive density estimated by Pareto-smoothed importance-sampling leave-one-out cross-validation (ELPD-LOO), with the count of $\hat k_i > 0.7$ observations reported alongside as a reliability flag; (ii) test-set mean absolute percentage error (MAPE), continuous ranked probability score (CRPS), and 90\% predictive coverage; and (iii) for synthetic conditions, latent-mean normalised RMSE against the known DGP latent.
 
-\paragraph{Publication-ready convergence.} The criterion defined in Section~\ref{sec:identifiability} is applied identically across all experiments: zero divergences, zero max-tree-depth saturations, BFMI $\ge 0.30$ on every chain, $\widehat{R} \le 1.01$, and bulk/tail ESS per chain $\ge 100$ on the retained mixing diagnostics (raw parameters for single-Hill; label-invariant joint log-likelihood plus scalar non-component parameters, together with relabeled component parameters, for mixtures).
+\paragraph{Publication-ready convergence.} We apply the publication-ready criterion of Section~\ref{sec:identifiability} unchanged across all experiments.
 
 \paragraph{Component summaries.} For mixture fits we additionally report posterior mixture weights $\hat\pi_k$, the Shannon effective component count $^1\!D = \exp(-\sum_k \hat\pi_k \log \hat\pi_k)$ \citep{hill1973diversity}, and the mean pairwise cosine distance between active Hill response curves. The latter is computed on a fit-adaptive saturation grid that covers the active components' half-saturation range, making it independent of how the prior scale was set.
 
@@ -116,7 +116,7 @@ A model is treated as effectively converged when all three pass; this is the cri
 
 \subsection{Data-Generating Processes}
 
-We evaluate the models across three data-generating processes (DGPs): (1)~\emph{Single} ($K=1$), a single Hill response; (2)~\emph{Mixture~$K=2$}, a two-component mixture; and (3)~\emph{Mixture~$K=3$}, a three-component mixture. Each DGP uses $T = 200$ observations and we run five random seeds per condition, so the design contains $3 \times 3 \times 5 = 45$ fits.
+We evaluate three data-generating processes (DGPs)---\emph{Single} ($K=1$), \emph{Mixture~$K=2$}, \emph{Mixture~$K=3$}---against three fitted models---Single Hill, Mixture~$K=2$, Mixture~$K=3$. Each DGP uses $T = 200$ observations with five random seeds, so the design contains $3$ DGPs $\times$ $3$ models $\times$ $5$ seeds $= 45$ fits.
 
 \subsection{Results}
 
@@ -236,7 +236,7 @@ Toys \& Hobbies    & Single Hill    & $-6{,}379 \pm 89$ & $36.4$ & $57.3$ & $0.9
 \end{tabular}
 \end{table}
 
-Two caveats apply to the magnitude of these gaps before any substantive reading. (1)~The standard errors in Table~\ref{tab:real_predictive} are per-fit PSIS-LOO standard errors of the individual ELPD point estimates, not the proper paired difference \texttt{se\_diff} between two models on the same observations \citep{vehtari2017loo}. Computing \texttt{se\_diff} requires pointwise log-likelihood matrices that we did not retain. As a coarse upper bound on a paired SE, treating the two models as independent gives $\sqrt{86^2+48^2} \approx 99$ (beauty \& fitness), $\sqrt{63^2+48^2} \approx 79$ (home \& garden), and $\sqrt{89^2+91^2} \approx 127$ (toys \& hobbies), under which the $K=3$ vs.\ single-Hill gaps are roughly $2$--$4$ such SE in magnitude---meaningful but not as dramatic as the per-fit SE alone might suggest. The seed-level SDs in Figure~\ref{fig:real_elpd_bar} are Monte Carlo variability across NUTS reruns, not data-level uncertainty. (2)~PSIS-LOO itself is reliable only when $\hat k_i \le 0.7$ for essentially all observations. Table~\ref{tab:real_convergence} reports the per-cell $\hat k_i > 0.7$ counts: Beauty \& Fitness Mixture~$K=2$ has $15$ such observations on average ($\max 21$), Beauty \& Fitness Mixture~$K=3$ has $3.3$ ($\max 10$), and other cells are in the single digits. The ELPD-LOO numbers for Beauty \& Fitness in particular should therefore be read as ELPD estimates from a partially-degraded PSIS approximation, not as clean predictive-density measurements; the relative ordering of models is informative but the absolute magnitudes are softer.
+Two caveats apply to the magnitude of these gaps before any substantive reading. (1)~The standard errors in Table~\ref{tab:real_predictive} are per-fit PSIS-LOO standard errors of the individual ELPD point estimates, not the proper paired difference \texttt{se\_diff} between two models on the same observations \citep{vehtari2017loo}. Computing \texttt{se\_diff} requires pointwise log-likelihood matrices that we did not retain. As a coarse heuristic that is conservative only if the two models' pointwise scores are positively correlated, treating the two model ELPDs as independent gives $\sqrt{86^2+48^2} \approx 99$ (beauty \& fitness), $\sqrt{63^2+48^2} \approx 79$ (home \& garden), and $\sqrt{89^2+91^2} \approx 127$ (toys \& hobbies); the $K=3$ vs.\ single-Hill gaps are then roughly $2$--$4$ such heuristic SE in magnitude. This is not a paired \texttt{se\_diff} substitute---the direction of the bias depends on the (unknown) pointwise covariance---so we report it only to ground readers in the order of magnitude. The seed-level SDs in Figure~\ref{fig:real_elpd_bar} are Monte Carlo variability across NUTS reruns, not data-level uncertainty. (2)~PSIS-LOO itself is reliable only when $\hat k_i \le 0.7$ for essentially all observations. Table~\ref{tab:real_convergence} reports the per-cell $\hat k_i > 0.7$ counts: Beauty \& Fitness Mixture~$K=2$ has $15$ such observations on average ($\max 21$), Beauty \& Fitness Mixture~$K=3$ has $3.3$ ($\max 10$), and other cells are in the single digits. The ELPD-LOO numbers for Beauty \& Fitness in particular should therefore be read as ELPD estimates from a partially-degraded PSIS approximation, not as clean predictive-density measurements; the relative ordering of models is informative but the absolute magnitudes are softer.
 
 Figure~\ref{fig:real_elpd_bar} visualises the same comparison. The Mixture~$K=3$ advantage is consistent in sign across organisations, while the absolute scale of ELPD-LOO varies by an order of magnitude with series length and target variance.
 
@@ -247,7 +247,7 @@ Figure~\ref{fig:real_elpd_bar} visualises the same comparison. The Mixture~$K=3$
 \label{fig:real_elpd_bar}
 \end{figure}
 
-The relationship between ELPD and the other metrics is heterogeneous. On \emph{home \& garden} the rank ordering of models is consistent across ELPD, CRPS, and MAPE: the mixture improves all three. On \emph{toys \& hobbies}, ELPD and CRPS both improve, while MAPE is non-monotonic. On \emph{beauty \& fitness}, ELPD improves substantially but MAPE and CRPS \emph{deteriorate} slightly for $K=3$, and the model remains visibly underconfident: 90\% coverage rises from $0.33$ (single) to $0.54$ ($K=3$) but stays well below the nominal level. The ELPD gain on this organisation therefore reflects a localised improvement in predictive density rather than a uniform predictive win; this should not be read as ``$K=3$ predicts better on beauty \& fitness''. We return to this in the discussion.
+The relationship between ELPD and the other metrics is heterogeneous and \emph{not} uniformly favourable to the mixture. On \emph{home \& garden}, Mixture~$K=3$ has the best ELPD but Single Hill has the best MAPE ($26.0$) and CRPS ($25.0$); the mixture trades a small MAPE/CRPS regression for a sizeable ELPD gain. On \emph{toys \& hobbies}, ELPD and CRPS both improve under $K=3$, while MAPE is non-monotonic. On \emph{beauty \& fitness}, ELPD improves substantially but MAPE and CRPS \emph{deteriorate} for $K=3$, and the model remains visibly underconfident: 90\% coverage rises from $0.33$ (single) to $0.54$ ($K=3$) but stays well below the nominal level. The ELPD gain on this organisation therefore reflects a localised improvement in predictive density rather than a uniform predictive win; this should not be read as ``$K=3$ predicts better on beauty \& fitness''. We return to this in the discussion.
 
 To make concrete what the mixture is doing, Figure~\ref{fig:real_response_panel} shows the posterior response curves for the home \& garden organisation under all three models on a single representative seed. Single-Hill recovers one slowly-saturating curve. Mixture~$K=2$ resolves two components with weights $0.93$ and $0.07$, in which the small minority component carries a much higher saturation ceiling. Mixture~$K=3$ uses two active components with weights $0.84$ and $0.14$ and a third component that collapses to weight $0.02$ (labelled \emph{inactive} in the legend). The qualitative two-mode structure is robust to whether $K$ is set to 2 or 3, which is consistent with the posterior effective component count reported below.
 
@@ -264,7 +264,7 @@ Table~\ref{tab:real_convergence} summarises the rate at which each (organisation
 
 \begin{table}[ht]
 \centering
-\caption{Real-data convergence pass rates (publication-ready criterion across three seeds), Shannon effective count $^1\!D_{\text{post}} = \exp(-\sum_k \hat\pi_k \log \hat\pi_k)$ evaluated at the posterior mean of $\hat\pi$, active component count $K_{\text{active}}$ (number of mixture components with posterior mean weight above $1/(2K)$ averaged across seeds), the mean and maximum number of LOO observations with $\hat k_i > 0.7$ across seeds, and the posterior mean pairwise cosine separation between active Hill components (Section~\ref{sec:real-resolvability}). $^1\!D_{\text{post}}$ and $K_{\text{active}}$ disagree because Shannon down-weights uneven mixtures: e.g.\ Home \& Garden Mixture~$K=3$ uses two dominant components ($K_{\text{active}}=2.00$) but with weights $\approx 0.84, 0.14$, so $^1\!D_{\text{post}}=1.66$.}
+\caption{Per-cell convergence (publication-ready pass rate over three seeds), Shannon effective count $^1\!D_{\text{post}}$ evaluated at the posterior mean of $\hat\pi$, active component count $K_{\text{active}}$ (components with posterior mean weight $> 1/(2K)$, averaged over seeds), Pareto-$\hat k > 0.7$ counts (mean/max), and posterior mean pairwise cosine separation between active Hill components (Section~\ref{sec:real-resolvability}). $^1\!D_{\text{post}}$ and $K_{\text{active}}$ can disagree on imbalanced mixtures, as discussed in the main text.}
 \label{tab:real_convergence}
 \begin{tabular}{llrrrrr}
 \toprule
@@ -316,7 +316,7 @@ We organise the discussion around three honest categories so the reader can sepa
 
 \paragraph{Recovery on the matched DGP.} When the synthetic DGP is itself a Hill mixture, the model recovers it: latent-mean nRMSE roughly halves under $K=2$ and shrinks by $\approx 2.4\times$ under matched $K=3$, with ELPD gains of $+50$ and $+45$ respectively over single-Hill (Section~\ref{sec:synthetic}).
 
-\paragraph{Predictive density on real data, with caveats.} Mixture~$K=3$ has the highest estimated ELPD-LOO in every real organisation, with point gaps $+222$ to $+308$ ($\approx 2$--$4$ coarse paired SE). The gaps are reported as estimates, not as established improvements: the proper paired $\mathtt{se\_diff}$ could not be recomputed and Beauty \& Fitness has degraded PSIS reliability (Section~\ref{sec:real}).
+\paragraph{Predictive density on real data, with caveats.} Mixture~$K=3$ has the highest estimated ELPD-LOO in every real organisation, with point gaps $+222$ to $+308$ ($\approx 2$--$4$ coarse heuristic SE). These are reported as estimates rather than as established improvements: (i)~the proper paired $\mathtt{se\_diff}$ could not be recomputed, (ii)~Beauty \& Fitness has degraded PSIS reliability, and (iii)~\emph{none of the nine real-data Mixture~$K=3$ fits is publication-ready}, so the K=3 ELPD numbers come from non-converged inference and should be treated as an exploratory signal rather than a benchmark result (Section~\ref{sec:real}).
 
 \paragraph{Resolvability and label-invariant diagnostics as working tools.} The cosine separation / Shannon count axis (Section~\ref{sec:resolvability}) gives a concrete vocabulary for placing each real organisation on a diagnostic plane (Section~\ref{sec:real-resolvability}), and the three-bucket label-invariant diagnostic (Section~\ref{sec:identifiability}) lets us diagnose mixture posteriors in the same workflow as single-Hill.
 
@@ -338,7 +338,7 @@ These are the obvious next questions we did not attempt and have therefore not r
 
 \paragraph{Stronger inference for non-converging fits.} Mixture~$K=3$ on Beauty \& Fitness and Toys \& Hobbies might converge with longer chains, tempering, alternative initialisation, or hand-tuned mass matrices. We did not pursue this; the per-fit summaries on disk are from the configuration in Appendix~\ref{app:hyperparams} and nothing else.
 
-\paragraph{Paired LOO comparisons.} We report per-fit PSIS-LOO standard errors but did not retain the pointwise log-likelihood matrices needed to compute the proper paired $\mathtt{se\_diff}$ of \citet{vehtari2017loo}. The coarse independent-sum upper bound we report in Section~\ref{sec:real} should not be treated as a substitute.
+\paragraph{Paired LOO comparisons.} We report per-fit PSIS-LOO standard errors but did not retain the pointwise log-likelihood matrices needed to compute the proper paired $\mathtt{se\_diff}$ of \citet{vehtari2017loo}. The coarse independent-sum heuristic in Section~\ref{sec:real} is not a substitute, and is not a strict upper bound; we report it only for order-of-magnitude calibration.
 
 \paragraph{Causal identification.} As \citet{dew2024mmm} argue, the joint identification of nonlinear and time-varying effects from observational time series is unresolved. Our mixture extension does not address this; it only changes the assumed saturation family. Practitioners using this model for budget decisions should triangulate against geo-experiments or incrementality tests.
 
@@ -389,27 +389,34 @@ Mixture $K=3$ & $1{,}600$ / $1{,}600$ & $1{,}200$ / $1{,}200$ & $2$ & $0.97$ \\
 \section{Priors}
 \label{app:priors}
 
-Table~\ref{tab:priors} lists the priors used in every experiment. The priors on $A_k$ and $\mu_0$ scale automatically with the training-data range and mean to accommodate diverse target magnitudes; the prior on $\lambda$ uses a cumulative-sum reparameterization (Section~\ref{sec:identifiability}) with positive log-normal increments. We have not run a formal sensitivity sweep on the multiplicative constants; that is noted as a limitation in Section~\ref{sec:limitations}.
+Table~\ref{tab:priors} lists the priors actually used by the implementation. Two parameter groups---mixture weights and the saturation parameters $(A_k, n_k, \lambda_k)$---use mildly hierarchical or data-anchored constructions rather than independent draws, so we describe them as the implementation specifies them rather than as a single-line distribution. We have not run a formal sensitivity sweep on the constants; this is noted in Section~\ref{sec:limitations}.
 
 \begin{table}[ht]
 \centering
-\caption{Priors. Statistics with hats (e.g.\ $\widehat{\text{range}}(y)$, $\bar{y}$, $\hat\sigma_y$) are computed from the training portion only.}
+\caption{Priors as implemented. Statistics with hats (e.g.\ $\widehat{\text{range}}(y)$, $\bar{y}$, $\hat\sigma_y$) are computed from the training portion only. The mixture weights $\pi$ are built by stick-breaking from $K-1$ Beta variables; the per-component log-amplitude and log-slope are drawn from a mildly hierarchical Normal with shared $\mu$ and hierarchical $\sigma$; the ordered half-saturations $\lambda_k$ are anchored to quantiles of the adstocked spend $s$.}
 \label{tab:priors}
 \begin{tabular}{lll}
 \toprule
 Parameter & Distribution & Notes \\
 \midrule
 Adstock decay $\alpha$ & $\text{Beta}(2, 2)$ & shared across components \\
-Half-saturation increments $\delta_j$ & $\text{LogNormal}(\log(s_{\max}/(K{+}1)), 0.7)$ & $\lambda_k = \lambda_1 + \sum_{j \le k} \delta_j$ \\
-Hill slope $n_k$ & $\text{LogNormal}(\log 1.5, 0.4)$ & per component \\
-Component amplitude $A_k$ & $\text{LogNormal}(\log(0.3 \cdot \widehat{\text{range}}(y)), 0.8)$ & per component \\
-Mixture weights $\pi$ & $\text{Dirichlet}(\mathbf{1}_K)$ & symmetric \\
-Intercept $\mu_0$ & $\mathcal{N}(\bar{y}, 2\hat\sigma_y)$ & data-dependent \\
+Stick proportions $v_k$ ($k\le K{-}1$) & $\text{Beta}(a, b)$ & default $(a,b)=(1,1)$; $\pi_k = v_k \prod_{j<k}(1{-}v_j)$ \\
+Hier.\ log-amplitude location $\mu_{\log A}$ & $\mathcal{N}(\log(0.3 \cdot \widehat{\text{range}}(y)),\ 0.5)$ & shared across $k$ \\
+Hier.\ log-amplitude scale $\sigma_{\log A}$ & $\text{LogNormal}(\ell_A, s_A)$ & per-experiment $\ell_A, s_A$ \\
+Per-component $\log A_k$ & $\mathcal{N}(\mu_{\log A} + a^{\text{anch}}_k,\ \sigma_{\log A})$ & non-centred; $a^{\text{anch}}_k$ is an optional anchor (Notes) \\
+Hier.\ log-slope location $\mu_{\log n}$ & $\mathcal{N}(\log 1.5,\ 0.3)$ & shared across $k$ \\
+Hier.\ log-slope scale $\sigma_{\log n}$ & $\text{LogNormal}(\ell_n, s_n)$ & per-experiment $\ell_n, s_n$ \\
+Per-component $\log n_k$ & $\mathcal{N}(\mu_{\log n} + n^{\text{anch}}_k,\ \sigma_{\log n})$ & non-centred \\
+Anchor $\log \lambda_1$ & $\mathcal{N}(\log \text{quantile}_{q_1}(s),\ s_{\text{anch}})$ & $q_k$ are equispaced quantiles \\
+Anchor increments $\log \lambda_{k+1} - \log \lambda_k$ & ordered, anchored to $\text{quantile}_{q_{k+1}}(s) - \text{quantile}_{q_k}(s)$ & strictly positive; perturbation scale $s_{\text{inc}}$ \\
+Intercept $\mu_0$ & $\mathcal{N}(\bar{y},\ 2\hat\sigma_y)$ & data-anchored \\
 Trend $\beta$ & $\mathcal{N}(0, 0.5)$ & on standardised $t$ \\
-Observation noise $\sigma$ & $\text{HalfNormal}(\hat\sigma_y)$ & data-dependent \\
+Observation noise $\sigma$ & $\text{HalfNormal}(\hat\sigma_y)$ & data-anchored \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\noindent The anchor terms $a^{\text{anch}}_k, n^{\text{anch}}_k$ provide a soft ordering of components in $(A, n)$ space, used to stabilise mixing on data with weakly identified mixtures; they are zero by default and non-zero on the synthetic Mixture~$K=2$ / $K=3$ benchmarks. Exact constants $(\ell_A, s_A, \ell_n, s_n, s_{\text{anch}}, s_{\text{inc}})$ and anchor strengths used per experiment are reproduced in \texttt{src/hill\_mixture\_mmm/models.py} and the per-fit JSON summaries.
 
 \section{Synthetic DGP Parameters}
 \label{app:dgp}
