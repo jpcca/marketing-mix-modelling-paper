@@ -360,7 +360,9 @@ Beyond the failure modes and untested directions in Section~\ref{sec:discussion}
 \label{sec:repro}
 
 All code, configurations, and per-case artifacts are released at
-\url{https://github.com/jpcca/marketing-mix-modelling}.
+\begin{center}
+\url{https://github.com/jpcca/marketing-mix-modelling}
+\end{center}
 The repository layout:
 \begin{itemize}
     \item \texttt{src/hill\_mixture\_mmm/} -- model definitions and inference utilities.
@@ -412,23 +414,24 @@ Table~\ref{tab:priors} lists the priors actually used by the implementation. Two
 \centering
 \caption{Priors as implemented. Statistics with hats (e.g.\ $\widehat{\text{range}}(y)$, $\bar{y}$, $\hat\sigma_y$) are computed from the training portion only. The mixture weights $\pi$ are built by stick-breaking from $K-1$ Beta variables; the per-component log-amplitude and log-slope are drawn from a mildly hierarchical Normal with shared $\mu$ and hierarchical $\sigma$; the ordered half-saturations $\lambda_k$ are anchored to quantiles of the adstocked spend $s$.}
 \label{tab:priors}
-\begin{tabular}{lll}
+\small
+\begin{tabular}{p{0.30\textwidth}p{0.36\textwidth}p{0.27\textwidth}}
 \toprule
 Parameter & Distribution & Notes \\
 \midrule
 Adstock decay $\alpha$ & $\text{Beta}(2, 2)$ & shared across components \\
-Stick proportions $v_k$ ($k\le K{-}1$) & $\text{Beta}(a, b)$ & $(a,b)=(3,1)$ for $K=2$, $(3, 1.5)$ for $K=3$; $\pi_k = v_k \prod_{j<k}(1{-}v_j)$ \\
-Hier.\ log-amplitude location $\mu_{\log A}$ & $\mathcal{N}(\log(0.3 \cdot \widehat{\text{range}}(y)),\ 0.5)$ & shared across $k$ \\
-Hier.\ log-amplitude scale $\sigma_{\log A}$ & $\text{LogNormal}(\ell_A, s_A)$ & per-experiment $\ell_A, s_A$ \\
-Per-component $\log A_k$ & $\mathcal{N}(\mu_{\log A} + a^{\text{anch}}_k,\ \sigma_{\log A})$ & non-centred; $a^{\text{anch}}_k$ is an optional anchor (Notes) \\
-Hier.\ log-slope location $\mu_{\log n}$ & $\mathcal{N}(\log 1.5,\ 0.3)$ & shared across $k$ \\
-Hier.\ log-slope scale $\sigma_{\log n}$ & $\text{LogNormal}(\ell_n, s_n)$ & per-experiment $\ell_n, s_n$ \\
-Per-component $\log n_k$ & $\mathcal{N}(\mu_{\log n} + n^{\text{anch}}_k,\ \sigma_{\log n})$ & non-centred \\
-Anchor $\log \lambda_1$ & $\mathcal{N}(\log \text{quantile}_{q_1}(s),\ s_{\text{anch}})$ & $q_k$ are equispaced quantiles \\
-Anchor increments $\log \lambda_{k+1} - \log \lambda_k$ & ordered, anchored to $\text{quantile}_{q_{k+1}}(s) - \text{quantile}_{q_k}(s)$ & strictly positive; perturbation scale $s_{\text{inc}}$ \\
+Stick proportions $v_k$, $k\le K{-}1$ & $\text{Beta}(a, b)$ & $(a,b){=}(3,1)$ for $K{=}2$, $(3, 1.5)$ for $K{=}3$; $\pi_k {=} v_k \prod_{j<k}(1{-}v_j)$ \\
+$\mu_{\log A}$ (hier.\ loc.) & $\mathcal{N}(\log(0.3 \cdot \widehat{\text{range}}(y)),\ 0.5)$ & shared across $k$ \\
+$\sigma_{\log A}$ (hier.\ scale) & $\text{LogNormal}(\ell_A, s_A)$ & per-experiment $\ell_A, s_A$ \\
+Per-component $\log A_k$ & $\mathcal{N}(\mu_{\log A} {+} a^{\text{anch}}_k,\ \sigma_{\log A})$ & non-centred; $a^{\text{anch}}_k$ optional anchor \\
+$\mu_{\log n}$ (hier.\ loc.) & $\mathcal{N}(\log 1.5,\ 0.3)$ & shared across $k$ \\
+$\sigma_{\log n}$ (hier.\ scale) & $\text{LogNormal}(\ell_n, s_n)$ & per-experiment $\ell_n, s_n$ \\
+Per-component $\log n_k$ & $\mathcal{N}(\mu_{\log n} {+} n^{\text{anch}}_k,\ \sigma_{\log n})$ & non-centred \\
+$\log \lambda_1$ (anchor) & $\mathcal{N}(\log\, \text{quantile}_{q_1}(s),\ s_{\text{anch}})$ & $q_k$ equispaced quantiles of $s$ \\
+$\log \lambda_{k+1} {-} \log \lambda_k$ & ordered, anchored to $\text{quantile}_{q_{k+1}}(s){-}\text{quantile}_{q_k}(s)$ & strictly positive; scale $s_{\text{inc}}$ \\
 Intercept $\mu_0$ & $\mathcal{N}(\bar{y},\ 2\hat\sigma_y)$ & data-anchored \\
-Trend $\beta$ & $\mathcal{N}(0, \hat\sigma_y)$ & on standardised $t$; fallback $\hat\sigma_y \to 5$ \\
-Observation noise $\sigma$ & $\text{HalfNormal}(\hat\sigma_y)$ & data-anchored \\
+Trend $\beta$ & $\mathcal{N}(0,\ \hat\sigma_y)$ & on standardised $t$; fallback $\to 5$ \\
+Obs.\ noise $\sigma$ & $\text{HalfNormal}(\hat\sigma_y)$ & data-anchored \\
 \bottomrule
 \end{tabular}
 \end{table}
