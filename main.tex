@@ -271,9 +271,10 @@ Table~\ref{tab:real_convergence} summarises the rate at which each (organisation
 \centering
 \caption{Per-cell convergence and component-summary diagnostics for the real-data benchmark. Columns are defined in Sections~\ref{sec:setup} and~\ref{sec:real-resolvability}.}
 \label{tab:real_convergence}
+\small
 \begin{tabular}{llrrrrr}
 \toprule
-Organisation & Model & Pub.\ pass rate & $^1\!D_{\text{post}}$ & $K_{\text{active}}$ & $\hat k_i > 0.7$ (mean / max) & $\bar{d}_{\cos}^{\text{post}}$ \\
+Organisation & Model & Pub.\ pass & $^1\!D_{\text{post}}$ & $K_{\text{act}}$ & $\hat k > 0.7$ (mean/max) & $\bar{d}_{\cos}^{\text{post}}$ \\
 \midrule
 Beauty \& Fitness  & Single Hill    & $0.67$ & $1.00$ & $1.00$ & $1.7$ / $3$  & --- \\
                    & Mixture $K=2$ & $0.00$ & $1.26$ & $1.65$ & $15.0$ / $21$ & $0.46$ \\
@@ -458,7 +459,7 @@ Hier.\ log-$n$ scale $(\ell_n, s_n)$ & $(-1.8, 0.20)$ & $(-1.9, 0.18)$ \\
 \end{tabular}
 \end{table}
 
-\noindent The exact constants $(\ell_A, s_A, \ell_n, s_n, s_{\text{anch}}, s_{\text{inc}})$ for every experiment are reproduced verbatim in \texttt{src/hill\_mixture\_mmm/models.py} and \texttt{src/hill\_mixture\_mmm/component\_resolvability.py}, which are the authoritative source.
+\noindent The exact constants $(\ell_A, s_A, \ell_n, s_n, s_{\text{anch}}, s_{\text{inc}})$ for every experiment are reproduced verbatim in the modules \texttt{models.py} and \texttt{component\_resolvability.py} under \texttt{src/hill\_mixture\_mmm/}, which are the authoritative source.
 
 \section{Synthetic DGP Parameters}
 \label{app:dgp}
