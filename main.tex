@@ -72,7 +72,7 @@ Let $x_t$ denote aggregated marketing spend at time $t$ and $y_t$ the observed o
 \begin{equation}
     f_k(s) = A_k \cdot \frac{s^{n_k}}{\lambda_k^{n_k} + s^{n_k}},
 \end{equation}
-with maximum effect $A_k$, half-saturation point $\lambda_k$, and slope $n_k \sim \text{LogNormal}(\log 1.5, 0.4)$.
+with maximum effect $A_k$, half-saturation point $\lambda_k$, and slope $n_k$ (priors specified in the next paragraph and fully detailed in Appendix~\ref{app:priors}).
 
 \paragraph{Mixture likelihood.} The observation model is a Gaussian mixture over components:
 \begin{equation}
@@ -237,7 +237,11 @@ Toys \& Hobbies    & Single Hill    & $-6{,}379 \pm 89$ & $36.4$ & $57.3$ & $0.9
 \end{tabular}
 \end{table}
 
-Two caveats apply to the magnitude of these gaps before any substantive reading. (1)~The standard errors in Table~\ref{tab:real_predictive} are per-fit PSIS-LOO standard errors of the individual ELPD point estimates, not the proper paired difference \texttt{se\_diff} between two models on the same observations \citep{vehtari2017loo}. Computing \texttt{se\_diff} requires pointwise log-likelihood matrices that we did not retain. As a coarse heuristic that is conservative only if the two models' pointwise scores are positively correlated, treating the two model ELPDs as independent gives $\sqrt{86^2+48^2} \approx 99$ (beauty \& fitness), $\sqrt{63^2+48^2} \approx 79$ (home \& garden), and $\sqrt{89^2+91^2} \approx 127$ (toys \& hobbies); the $K=3$ vs.\ single-Hill gaps are then roughly $2$--$4$ such heuristic SE in magnitude. This is not a paired \texttt{se\_diff} substitute---the direction of the bias depends on the (unknown) pointwise covariance---so we report it only to ground readers in the order of magnitude. The seed-level SDs in Figure~\ref{fig:real_elpd_bar} are Monte Carlo variability across NUTS reruns, not data-level uncertainty. (2)~PSIS-LOO itself is reliable only when $\hat k_i \le 0.7$ for essentially all observations. Table~\ref{tab:real_convergence} reports the per-cell $\hat k_i > 0.7$ counts: Beauty \& Fitness Mixture~$K=2$ has $15$ such observations on average ($\max 21$), Beauty \& Fitness Mixture~$K=3$ has $3.3$ ($\max 10$), and other cells are in the single digits. The ELPD-LOO numbers for Beauty \& Fitness in particular should therefore be read as ELPD estimates from a partially-degraded PSIS approximation, not as clean predictive-density measurements; the relative ordering of models is informative but the absolute magnitudes are softer.
+Two caveats apply to the magnitude of these gaps before any substantive reading.
+
+\emph{Paired SE.} The standard errors in Table~\ref{tab:real_predictive} are per-fit PSIS-LOO standard errors of the individual ELPD point estimates, not the proper paired difference \texttt{se\_diff} between two models on the same observations \citep{vehtari2017loo}. Computing \texttt{se\_diff} requires pointwise log-likelihood matrices that we did not retain. As a coarse heuristic that is conservative only if the two models' pointwise scores are positively correlated, treating the two model ELPDs as independent gives $\sqrt{86^2+48^2} \approx 99$ (beauty \& fitness), $\sqrt{63^2+48^2} \approx 79$ (home \& garden), and $\sqrt{89^2+91^2} \approx 127$ (toys \& hobbies); the $K=3$ vs.\ single-Hill gaps are then roughly $2$--$4$ such heuristic SE in magnitude. This is not a paired \texttt{se\_diff} substitute---the direction of the bias depends on the (unknown) pointwise covariance---so we report it only to ground readers in the order of magnitude. The seed-level SDs in Figure~\ref{fig:real_elpd_bar} are Monte Carlo variability across NUTS reruns, not data-level uncertainty.
+
+\emph{PSIS reliability.} PSIS-LOO itself is reliable only when $\hat k_i \le 0.7$ for essentially all observations. Table~\ref{tab:real_convergence} reports the per-cell $\hat k_i > 0.7$ counts: Beauty \& Fitness Mixture~$K=2$ has $15$ such observations on average ($\max 21$), Beauty \& Fitness Mixture~$K=3$ has $3.3$ ($\max 10$), and other cells are in the single digits. The ELPD-LOO numbers for Beauty \& Fitness in particular should therefore be read as ELPD estimates from a partially-degraded PSIS approximation, not as clean predictive-density measurements; the relative ordering of models is informative but the absolute magnitudes are softer.
 
 Figure~\ref{fig:real_elpd_bar} visualises the same comparison. The Mixture~$K=3$ advantage is consistent in sign across organisations, while the absolute scale of ELPD-LOO varies by an order of magnitude with series length and target variance.
 
@@ -355,7 +359,19 @@ Beyond the failure modes and untested directions in Section~\ref{sec:discussion}
 \section{Code and Data Availability}
 \label{sec:repro}
 
-All code, configurations, and per-case artifacts are released at \url{https://github.com/jpcca/marketing-mix-modelling}. The repository contains: model definitions and inference utilities (\texttt{src/hill\_mixture\_mmm/}), the synthetic data generator (\texttt{data.py}), the synthetic and real-data benchmark drivers (\texttt{scripts/run\_benchmark.py}, \texttt{scripts/run\_real\_data\_validation.py}), the resolvability sweep (\texttt{scripts/run\_component\_resolvability\_sweep.py}), and the analysis script that computes posterior cosine separation for Section~\ref{sec:real-resolvability} (\texttt{scripts/compute\_posterior\_separation.py}). Per-fit JSON summaries containing posterior weights, label-invariant and relabeled diagnostics, and convergence flags are checked in under \texttt{paper/figures/\{synthetic,real\}/}. Random seeds are fixed and listed alongside the per-fit artifacts.
+All code, configurations, and per-case artifacts are released at
+\url{https://github.com/jpcca/marketing-mix-modelling}.
+The repository layout:
+\begin{itemize}
+    \item \texttt{src/hill\_mixture\_mmm/} -- model definitions and inference utilities.
+    \item \texttt{src/hill\_mixture\_mmm/data.py} -- synthetic data generator (Section~\ref{sec:synthetic}).
+    \item \texttt{src/hill\_mixture\_mmm/component\_resolvability.py} -- resolvability-sweep prior overrides (Section~\ref{sec:resolvability}; see Appendix~\ref{app:priors}).
+    \item \texttt{scripts/run\_benchmark.py}, \texttt{scripts/run\_real\_data\_validation.py} -- synthetic and real-data benchmark drivers.
+    \item \texttt{scripts/run\_component\_resolvability\_sweep.py} -- resolvability sweep driver.
+    \item \texttt{scripts/compute\_posterior\_separation.py} -- posterior cosine separation for Section~\ref{sec:real-resolvability}.
+    \item \texttt{paper/figures/\{synthetic,real\}/} -- per-fit JSON summaries with posterior weights, label-invariant and relabeled diagnostics, and convergence flags.
+\end{itemize}
+Random seeds are fixed and recorded in each per-fit JSON. Sampler settings used per fit are stored in \texttt{fit\_summary}; the resolved prior configuration for each fit (including the resolvability-sweep overrides described below) is determined by the relevant module above rather than per-fit JSON.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -417,7 +433,29 @@ Observation noise $\sigma$ & $\text{HalfNormal}(\hat\sigma_y)$ & data-anchored \
 \end{tabular}
 \end{table}
 
-\noindent The anchor terms $a^{\text{anch}}_k, n^{\text{anch}}_k$ provide a soft ordering of components in $(A, n)$ space, used to stabilise mixing on weakly identified mixtures. They are controlled by a single scalar $\rho_K$ with implementation defaults $\rho_2 = 0.8$ and $\rho_3 = 0.7$, applied to \emph{all reported Mixture~$K=2$ and Mixture~$K=3$ fits} (both synthetic and real). For $K=2$ the increment construction is $\log\lambda_2 - \log\lambda_1 = (\log q_2 - \log q_1) + s_{\text{inc}} \cdot |z|$ with $z \sim \mathcal{N}(0,1)$, ensuring strict positivity; for $K=3$ the construction is $\log\lambda_{k+1} - \log\lambda_k = \max(\log q_{k+1} - \log q_k + s_{\text{inc}} \cdot z_k,\ 10^{-3})$, where $z_k \sim \mathcal{N}(0,1)$ and $q_1, q_2, q_3$ are equispaced quantiles of the adstocked spend. Exact constants $(\ell_A, s_A, \ell_n, s_n, s_{\text{anch}}, s_{\text{inc}})$ used per experiment are reproduced in \texttt{src/hill\_mixture\_mmm/models.py} and in each per-fit JSON summary under \texttt{fit\_summary}.
+\noindent The anchor terms $a^{\text{anch}}_k, n^{\text{anch}}_k$ provide a soft ordering of components in $(A, n)$ space, used to stabilise mixing on weakly identified mixtures. They are controlled by a single scalar $\rho_K$ with implementation defaults $\rho_2 = 0.8$ and $\rho_3 = 0.7$, applied to \emph{all reported Mixture~$K=2$ and Mixture~$K=3$ fits} (both synthetic and real). For $K=2$ the increment construction is $\log\lambda_2 - \log\lambda_1 = (\log q_2 - \log q_1) + s_{\text{inc}} \cdot |z|$ with $z \sim \mathcal{N}(0,1)$, ensuring strict positivity; for $K=3$ the construction is $\log\lambda_{k+1} - \log\lambda_k = \max(\log q_{k+1} - \log q_k + s_{\text{inc}} \cdot z_k,\ 10^{-3})$, where $z_k \sim \mathcal{N}(0,1)$ and $q_1, q_2, q_3$ are equispaced quantiles of the adstocked spend.
+
+\paragraph{Resolvability-sweep prior override.} Table~\ref{tab:priors} describes the prior configuration used by the synthetic and real-data benchmarks (Sections~\ref{sec:synthetic} and~\ref{sec:real}). The component-resolvability sweep in Section~\ref{sec:resolvability} uses a deliberately different prior on the mixture weights and on the half-saturation and amplitude/slope scales, so that the recovery axis is not dominated by the same prior signal that drives the headline benchmarks. The overrides, taken directly from \texttt{component\_resolvability.py}, are listed in Table~\ref{tab:resolvability_priors}; all other prior components match Table~\ref{tab:priors}.
+
+\begin{table}[ht]
+\centering
+\caption{Prior overrides used by the resolvability sweep of Section~\ref{sec:resolvability}. All other prior components match Table~\ref{tab:priors}.}
+\label{tab:resolvability_priors}
+\begin{tabular}{lcc}
+\toprule
+Parameter & Mixture $K=2$ override & Mixture $K=3$ override \\
+\midrule
+Stick proportions $(a, b)$       & $(0.7, 0.7)$  & $(5.0, 2.5)$ \\
+$\lambda$ base scale $s_{\text{anch},0}$  & $0.30$ & $0.28$ \\
+$\lambda$ anchor scale $s_{\text{anch}}$ & $0.06$ & $0.06$ \\
+$\lambda$ increment scale $s_{\text{inc}}$ & $0.04$ & $0.04$ \\
+Hier.\ log-$A$ scale $(\ell_A, s_A)$ & $(-1.3, 0.20)$ & $(-1.5, 0.18)$ \\
+Hier.\ log-$n$ scale $(\ell_n, s_n)$ & $(-1.8, 0.20)$ & $(-1.9, 0.18)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The exact constants $(\ell_A, s_A, \ell_n, s_n, s_{\text{anch}}, s_{\text{inc}})$ for every experiment are reproduced verbatim in \texttt{src/hill\_mixture\_mmm/models.py} and \texttt{src/hill\_mixture\_mmm/component\_resolvability.py}, which are the authoritative source.
 
 \section{Synthetic DGP Parameters}
 \label{app:dgp}
