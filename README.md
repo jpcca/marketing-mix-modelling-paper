@@ -2,7 +2,7 @@
 
 ## Overview
 
-This folder contains the preprint manuscript on a Bayesian **predictive mixture** of Hill saturation functions for Marketing Mix Modeling, implemented in the parent repository. The canonical text is `main.tex`; `hill_mixture_mmm_paper.md` is a **legacy draft from an earlier framing of the project and is no longer accurate** (see below).
+This folder contains the preprint manuscript on a Bayesian **predictive mixture** of Hill saturation functions for Marketing Mix Modeling, implemented in the parent repository. The canonical text is `main.tex`.
 
 ## Scope
 
@@ -41,7 +41,6 @@ The Discussion section is explicitly structured as **What worked / What did not 
 | `main.pdf` | Compiled PDF (rebuilt locally) |
 | `references.bib` | BibTeX bibliography |
 | `figures/` | Per-fit JSON summaries and rendered figures |
-| `hill_mixture_mmm_paper.md` | **Obsolete legacy draft** — predates the predictive-mixture reframing and the real-data benchmark; retained only for git history. Do not cite. |
 
 ## Compilation
 
