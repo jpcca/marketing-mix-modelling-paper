@@ -10,21 +10,21 @@
 \usepackage{graphicx}
 \usepackage[section]{placeins}
 
-\title{Bayesian Hill Mixture Models for Marketing Mix Modeling:\\
-Synthetic Benchmarks, Component Resolvability, and Real-Data Evaluation}
+\title{When Can a Mixture-of-Hill MMM Recover Its Components?\\
+A Resolvability Diagnostic and a Synthetic-to-Real Transfer Study}
 \author{Shohei Yoshida, Grisha Szep, Mizuki Oka}
-\date{May 2026}
+\date{July 2026}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Marketing Mix Models (MMMs) typically use a single Hill saturation curve per channel. We study a Bayesian \emph{predictive mixture} of $K$ Hill curves, implemented in NumPyro with an ordering reparameterisation, post-hoc relabeling, and label-invariant convergence diagnostics. The model is a mixture over the observation likelihood rather than over latent consumer segments: at each time step the aggregate target $y_t$ is modelled as a Gaussian mixture whose components correspond to different Hill responses on the same adstocked spend. We make no individual-level claim from this structure. All experiments---synthetic and real---use a single aggregated spend proxy $x_t = \sum_c x_{c,t}$ rather than channel-level mixtures, so the empirical scope of the paper is a controlled one-dimensional version of MMM rather than a full channel-level deployment. The question we ask is whether the extra component capacity buys better aggregate predictive density on this controlled scope and recovers interpretable response curves.
+Standard Marketing Mix Models (MMMs) commit to a single Hill saturation curve per channel. We study a minimal capacity extension---a Bayesian \emph{predictive mixture} of $K$ Hill curves, implemented in NumPyro with an ordering reparameterisation, post-hoc relabeling, and label-invariant convergence diagnostics---and ask not simply whether it helps, but a sharper pair of questions: when can the posterior actually recover distinct components, and do the recovery properties that hold on synthetic data transfer to field data? The model is a mixture over the observation likelihood rather than over latent consumer segments: at each time step the aggregate target $y_t$ is modelled as a Gaussian mixture whose components correspond to different Hill responses on the same adstocked spend. All experiments---synthetic and real---use a single aggregated spend proxy $x_t = \sum_c x_{c,t}$ rather than channel-level mixtures, so the empirical scope is a controlled one-dimensional version of MMM, and we make no individual-level claim.
 
-We report three experiments. (i)~A controlled synthetic benchmark shows that, when the data-generating process is itself a Hill mixture, the model recovers it: estimated ELPD-LOO improves whenever the DGP has multiple Hill components and incurs only a small penalty when it does not. (ii)~A \emph{component resolvability} study varies the cosine distance between true Hill curves and identifies an empirical, model-dependent transition near $\bar{d}_{\cos} \approx 0.10$, below which posteriors tend to collapse to fewer effective components. (iii)~A real-data benchmark on three Conjura organisations across three verticals (beauty \& fitness, home \& garden, toys \& hobbies) shows that Mixture~$K{=}3$ has higher estimated ELPD-LOO than single-Hill in every organisation, by $+222$ to $+308$ units; these gaps are reported subject to a paired \texttt{se\_diff} that we could not recompute from the stored summaries and to Pareto-$k$ reliability flags on Beauty \& Fitness. The gain is concentrated in predictive density: holdout MAPE and CRPS do not improve uniformly, and on Beauty \& Fitness they deteriorate slightly under $K=3$.
+Our primary contribution is a diagnostic toolkit for mixture MMMs: a \emph{component-resolvability} axis---the mean pairwise cosine distance $\bar{d}_{\cos}$ between component response curves against the Shannon effective component count---together with a label-invariant convergence workflow that makes mixture posteriors diagnosable in the same pipeline as single-Hill fits. On synthetic data where ground truth is known, the model recovers a matched Hill-mixture data-generating process, and the resolvability axis exposes an empirical, model-dependent transition near $\bar{d}_{\cos} \approx 0.10$ below which posteriors collapse to fewer effective components.
 
-The benchmark convergence threshold ($\widehat{R} \le 1.05$) that $44$ of $45$ synthetic fits satisfy fails uniformly for Mixture~$K{=}3$ on real data, where every fit reports max $\widehat{R} \ge 1.05$ and several show severe chain mixing failures (max $\widehat{R}$ up to $3.6$, tail ESS per chain as low as $1$--$6$). Re-using the resolvability axis on the real posteriors shows that this gap is organisation-dependent: Home \& Garden sits at the resolvability boundary, Toys \& Hobbies is consistent with three resolvable components but with chain-mixing caveats, and Beauty \& Fitness shows strong multi-modality in the posterior coupled with influential observations. We report these three regimes directly rather than collapsing them into a single summary. Code, configurations, and per-fit artifacts are released for reproduction.
+Our main empirical finding is a transfer gap. The benchmark convergence threshold ($\widehat{R} \le 1.05$) that $44$ of $45$ synthetic fits satisfy fails uniformly for Mixture~$K{=}3$ on three real Conjura organisations across three verticals ($0/9$ publication-ready fits; max $\widehat{R}$ up to $3.6$, tail ESS per chain as low as $1$--$6$). Re-using the resolvability axis on the real posteriors shows the gap is organisation-dependent---Home \& Garden sits at the resolvability boundary, Toys \& Hobbies is consistent with three resolvable components subject to chain-mixing caveats, and Beauty \& Fitness shows strong posterior multi-modality coupled with influential observations---and we report these three regimes directly rather than collapsing them into a single summary. Against this backdrop, Mixture~$K{=}3$ does attain higher estimated ELPD-LOO than single-Hill in every organisation, by $+222$ to $+308$ units; but because none of these fits is publication-ready and the gaps carry a paired \texttt{se\_diff} we could not recompute and Pareto-$k$ reliability flags on Beauty \& Fitness, we present the ELPD advantage as an exploratory signal rather than an established improvement, and it does not translate into uniform holdout MAPE/CRPS gains. Code, configurations, and per-fit artifacts are released for reproduction.
 \end{abstract}
 
 \noindent\textbf{Keywords:} Marketing Mix Modeling, Bayesian inference, Hill function, mixture models, label switching, component resolvability
@@ -37,9 +37,9 @@ Standard MMM commits to a single saturation curve per channel. There is no obser
 
 \paragraph{Contributions.}
 \begin{enumerate}
-    \item A controlled synthetic benchmark comparing single-Hill and Bayesian mixture-of-Hill models under known ground truth, with predictive, latent-recovery, and convergence metrics.
-    \item A \emph{component resolvability} study that systematically varies the cosine distance between true Hill curves and traces the recovered Shannon effective component count as a function of true separation, identifying an empirical threshold below which the posterior collapses to fewer components.
-    \item A real-data benchmark on three Conjura organisations across three verticals, paired with a re-use of the resolvability axis on the real posteriors. The combination shows that mixture-of-Hill has higher estimated predictive density than single-Hill across organisations (subject to PSIS reliability and paired-SE caveats) but that publication-ready convergence is organisation-dependent in a way the resolvability framework can diagnose.
+    \item \textbf{A diagnostic toolkit for mixture MMMs}: a component-resolvability axis (cosine separation between component response curves versus the Shannon effective component count) and a label-invariant convergence workflow (joint log-likelihood, permutation-invariant scalars, and post-hoc relabeled component parameters) that together make mixture posteriors diagnosable alongside single-Hill fits.
+    \item \textbf{A characterisation of the recovery transition}: a controlled synthetic study that systematically varies the cosine distance between true Hill curves and traces the recovered Shannon effective component count, identifying an empirical, model-dependent threshold below which the posterior collapses to fewer components.
+    \item \textbf{An honest synthetic-to-real transfer study}: a real-data benchmark on three Conjura organisations across three verticals in which the toolkit diagnoses, organisation by organisation, why the recovery behaviour that holds on synthetic data does not transfer---and in which the mixture's higher estimated predictive density is reported as an exploratory, non-converged signal subject to PSIS reliability and paired-SE caveats rather than as a benchmark win.
 \end{enumerate}
 
 \section{Related Work}
@@ -51,10 +51,10 @@ Standard MMM commits to a single saturation curve per channel. There is no obser
 
 \paragraph{Mixture identifiability and label switching.} Finite-mixture posteriors are non-identified under permutation of component labels \citep{stephens2000label, fruhwirth2006finite}. The label-switching problem makes per-component summaries meaningless without an additional convention, and breaks standard split-$\widehat{R}$ diagnostics \citep{vehtari2021rhat}. The two standard remedies---ordering constraints and post-hoc relabeling \citep{papastamoulis2014label}---trade off detailed balance against interpretability. We combine both with an additional label-invariant diagnostic (Section~\ref{sec:identifiability}) and treat them as complementary rather than substitutable.
 
-\section{Model Specification}
+\section{Model and Diagnostic Toolkit}
 \label{sec:model}
 
-Let $x_t$ denote aggregated marketing spend at time $t$ and $y_t$ the observed outcome (purchases, revenue, or a related target). Figure~\ref{fig:graphical-model} shows the model in plate notation. The model is implemented in NumPyro \citep{phan2019composable} with JAX acceleration.
+Let $x_t$ denote aggregated marketing spend at time $t$ and $y_t$ the observed outcome (purchases, revenue, or a related target). Figure~\ref{fig:graphical-model} shows the model in plate notation. The model is implemented in NumPyro \citep{phan2019composable} with JAX acceleration. This section specifies the model (Section~\ref{sec:mixture-model}) and then the two halves of the diagnostic toolkit that are our first contribution: the label-invariant convergence workflow (Section~\ref{sec:identifiability}) and the resolvability measures (Section~\ref{sec:resolvability-measures}).
 
 \begin{figure}[ht]
 \centering
@@ -62,6 +62,9 @@ Let $x_t$ denote aggregated marketing spend at time $t$ and $y_t$ the observed o
 \caption{Graphical model. Observed variables are shaded; plates indicate replication over time steps $t$ and mixture components $k$.}
 \label{fig:graphical-model}
 \end{figure}
+
+\subsection{The Mixture-of-Hill Model}
+\label{sec:mixture-model}
 
 \paragraph{Adstock transformation.} Geometric decay captures carryover from previous periods:
 \begin{equation}
@@ -82,10 +85,10 @@ where $\mu_0, \beta$ capture intercept and trend, and $\pi = (\pi_1, \ldots, \pi
 
 \paragraph{Hierarchical, data-anchored priors.} To accommodate diverse data scales we use mildly hierarchical, data-anchored priors rather than a single LogNormal on $(A_k, n_k)$: per-component $(\log A_k, \log n_k)$ are drawn from a Normal with shared location $\mu_{\log A}, \mu_{\log n}$ and component-wise scales $\sigma_{\log A}, \sigma_{\log n}$, with $\mu_{\log A}$ centred on $\log(0.3 \cdot \text{range}(y))$. The intercept and noise priors $\mu_0 \sim \mathcal{N}(\bar{y}, 2\sigma_y)$, $\sigma \sim \text{HalfNormal}(\sigma_y)$ are data-anchored in the same spirit. The full prior specification, including all hyperparameters, is in Appendix~\ref{app:priors}.
 
-\subsection{Identifiability and Label Switching}
+\subsection{Identifiability and Label-Invariant Diagnostics}
 \label{sec:identifiability}
 
-A finite mixture is invariant under permutations of component labels: any reordering of $(\pi_k, A_k, \lambda_k, n_k)$ yields the same likelihood. As a result, posterior summaries computed per component are meaningless without an additional convention, and standard split-$\widehat{R}$ on raw component parameters cannot distinguish genuine non-mixing from label permutations across chains \citep{stephens2000label, fruhwirth2006finite}.
+The first half of the toolkit addresses a problem that single-Hill MMM never faces: a finite mixture is invariant under permutations of component labels, so any reordering of $(\pi_k, A_k, \lambda_k, n_k)$ yields the same likelihood. As a result, posterior summaries computed per component are meaningless without an additional convention, and standard split-$\widehat{R}$ on raw component parameters cannot distinguish genuine non-mixing from label permutations across chains \citep{stephens2000label, fruhwirth2006finite}. We resolve this with an in-sampler ordering for identification and a label-invariant diagnostic set for convergence.
 
 \paragraph{Within-MCMC ordering with data anchors.} The reported fits impose $\lambda_1 < \lambda_2 < \cdots < \lambda_K$ during sampling via an ordered reparameterisation: $\log \lambda_1$ is anchored at a low quantile of the observed adstock $\hat\lambda_1 = \text{quantile}_{q_1}(s)$ and the remaining $\log \lambda_k$ are obtained by adding strictly positive increments around anchor gaps derived from higher quantiles $q_2, \ldots, q_K$ of $s$ (Appendix~\ref{app:priors}). This restricts the posterior to one canonical labelling and stabilises mixing relative to a flat ordered-LogNormal prior, at the cost of mild posterior geometry distortion near the anchors.
 
@@ -99,6 +102,11 @@ A finite mixture is invariant under permutations of component labels: any reorde
 \end{enumerate}
 A model is treated as effectively converged when all three pass; this is the criterion we use to report a \emph{publication-ready} fit. Concretely, a fit is publication-ready when (i) the No-U-Turn sampler produces zero divergences, zero maximum-tree-depth saturations, and a minimum chain-level BFMI of at least $0.30$; and (ii) every retained mixing diagnostic satisfies $\widehat{R} \le 1.01$ with both bulk and tail effective sample size of at least $100$ per chain. The mixing diagnostics retained depend on the model: for single-Hill we use raw parameter $\widehat{R}/$ESS; for mixtures we replace the raw component-parameter diagnostics with the label-invariant diagnostics above and additionally require the relabeled component parameters to satisfy the same thresholds. These thresholds match the conservative defaults of \citet{vehtari2021rhat} and ensure that ``pass'' is a strict criterion rather than a soft one.
 
+\subsection{Resolvability Measures}
+\label{sec:resolvability-measures}
+
+The second half of the toolkit is a pair of scalar summaries that let us ask \emph{whether a mixture fit actually resolved distinct components}, independent of how many components the model was given. For a mixture fit with posterior mixture weights $\hat\pi_k$ we report the Shannon effective component count $^1\!D = \exp(-\sum_k \hat\pi_k \log \hat\pi_k)$ \citep{hill1973diversity}, which equals $K$ when weights are uniform and collapses toward $1$ when a single component dominates. To quantify how distinct the recovered curves are, we compute the mean pairwise cosine distance $\bar{d}_{\cos}$ between the active Hill response curves on a fit-adaptive saturation grid that covers the active components' half-saturation range, making it independent of how the prior scale was set. Plotting $^1\!D$ against $\bar{d}_{\cos}$ defines the \emph{resolvability plane} used throughout the paper: Section~\ref{sec:resolvability} traces it on synthetic data with known separation, and Section~\ref{sec:real-resolvability} places the real organisations on the same axes.
+
 \section{Experimental Setup}
 \label{sec:setup}
 
@@ -106,20 +114,19 @@ A model is treated as effectively converged when all three pass; this is the cri
 
 \paragraph{Data splits.} Each time series is divided into a $75/25$ train/test split. Holdout predictions inherit the adstock state accumulated during training and are evaluated at their absolute time index rather than reset to zero, so that adstock decay and the trend term are propagated forward consistently.
 
-\paragraph{Evaluation metrics.} We report (i) expected log pointwise predictive density estimated by Pareto-smoothed importance-sampling leave-one-out cross-validation (ELPD-LOO), with the count of $\hat k_i > 0.7$ observations reported alongside as a reliability flag; (ii) test-set mean absolute percentage error (MAPE), continuous ranked probability score (CRPS), and 90\% predictive coverage; and (iii) for synthetic conditions, latent-mean normalised RMSE against the known DGP latent.
+\paragraph{Evaluation metrics.} We report (i) expected log pointwise predictive density estimated by Pareto-smoothed importance-sampling leave-one-out cross-validation (ELPD-LOO), with the count of $\hat k_i > 0.7$ observations reported alongside as a reliability flag; (ii) test-set mean absolute percentage error (MAPE), continuous ranked probability score (CRPS), and 90\% predictive coverage; and (iii) for synthetic conditions, latent-mean normalised RMSE against the known DGP latent. For mixture fits we additionally report the resolvability measures of Section~\ref{sec:resolvability-measures}.
 
 \paragraph{Publication-ready convergence.} We apply the publication-ready criterion of Section~\ref{sec:identifiability} unchanged across all experiments.
 
-\paragraph{Component summaries.} For mixture fits we additionally report posterior mixture weights $\hat\pi_k$, the Shannon effective component count $^1\!D = \exp(-\sum_k \hat\pi_k \log \hat\pi_k)$ \citep{hill1973diversity}, and the mean pairwise cosine distance between active Hill response curves. The latter is computed on a fit-adaptive saturation grid that covers the active components' half-saturation range, making it independent of how the prior scale was set.
+\section{When Can the Posterior Recover Components?}
+\label{sec:recovery}
 
-\section{Synthetic Benchmark}
+Ground truth is available only in simulation, so we use synthetic experiments to answer the two recovery questions before turning to field data. We first confirm that, when the data-generating process is itself a Hill mixture, the model recovers it (Section~\ref{sec:synthetic}); we then vary the separation between true components to locate the boundary of when recovery is possible at all (Section~\ref{sec:resolvability}).
+
+\subsection{Recovery on a Matched DGP}
 \label{sec:synthetic}
 
-\subsection{Data-Generating Processes}
-
-We evaluate three data-generating processes (DGPs)---\emph{Single} ($K=1$), \emph{Mixture~$K=2$}, \emph{Mixture~$K=3$}---against three fitted models---Single Hill, Mixture~$K=2$, Mixture~$K=3$. Each DGP uses $T = 200$ observations with five random seeds, so the design contains $3$ DGPs $\times$ $3$ models $\times$ $5$ seeds $= 45$ fits.
-
-\subsection{Results}
+This first experiment is a calibration check: if the model cannot recover a mixture even when the data are generated from one, nothing downstream is interpretable. We evaluate three data-generating processes (DGPs)---\emph{Single} ($K=1$), \emph{Mixture~$K=2$}, \emph{Mixture~$K=3$}---against three fitted models---Single Hill, Mixture~$K=2$, Mixture~$K=3$. Each DGP uses $T = 200$ observations with five random seeds, so the design contains $3$ DGPs $\times$ $3$ models $\times$ $5$ seeds $= 45$ fits.
 
 \paragraph{Convergence.} Under the benchmark threshold $\widehat{R} \le 1.05$ (raw parameters for single-Hill, label-invariant diagnostics for mixtures), $44/45$ fits cleared (Figure~\ref{fig:convergence}); the single exception was Mixture~$K=3$ on the $K=2$ DGP at seed~$1$, with max $\widehat{R} \approx 1.5$. The strict publication-ready criterion ($\widehat{R} \le 1.01$, ESS $\ge 100$/chain, plus HMC clauses of Section~\ref{sec:identifiability}) is met by $33/45$; the rest fall in the warning band $\widehat{R} \in [1.01, 1.05]$. Synthetic plots use the loose threshold for comparability with published MMM benchmarks; real-data results in Section~\ref{sec:real} use the strict criterion.
 
@@ -155,18 +162,14 @@ We evaluate three data-generating processes (DGPs)---\emph{Single} ($K=1$), \emp
 \label{fig:latent_nrmse}
 \end{figure}
 
-\section{Component Resolvability}
+\subsection{How Much Separation Is Needed? The Resolvability Transition}
 \label{sec:resolvability}
 
-The previous section shows that mixtures help when heterogeneity exists, but does not tell us \emph{how much} heterogeneity is required for the posterior to actually separate components. We address this with a controlled study.
+The matched-DGP experiment shows that mixtures help when heterogeneity exists, but does not tell us \emph{how much} heterogeneity is required for the posterior to actually separate components. We address this with a controlled study that sweeps the separation directly, and it is here that the resolvability axis of Section~\ref{sec:resolvability-measures} earns its place.
 
-\subsection{Design}
+\paragraph{Design.} We construct nine DGP profiles by varying the spacing $\delta$ between true Hill half-points around a fixed centre $c$, holding amplitude and slope fixed. For $K_{\text{true}} = 1$ we use one anchor profile; for $K_{\text{true}} \in \{2,3\}$ we use four profiles each, spanning low to extreme separation. Each profile is run with five seeds and fit with both Mixture~$K=2$ and Mixture~$K=3$, for $9 \times 2 \times 5 = 90$ fits in total. The separation axis $\bar{d}_{\cos}$ and recovery axis $^1\!D$ are the cosine-separation and Shannon-effective-count measures defined in Section~\ref{sec:resolvability-measures}; here $\bar{d}_{\cos}$ is computed on the \emph{true} component curves and $^1\!D$ on the posterior mixture weights.
 
-We construct nine DGP profiles by varying the spacing $\delta$ between true Hill half-points around a fixed centre $c$, holding amplitude and slope fixed. For $K_{\text{true}} = 1$ we use one anchor profile; for $K_{\text{true}} \in \{2,3\}$ we use four profiles each, spanning low to extreme separation. Each profile is run with five seeds and fit with both Mixture~$K=2$ and Mixture~$K=3$, for $9 \times 2 \times 5 = 90$ fits in total. The separation axis $\bar{d}_{\cos}$ and recovery axis $^1\!D$ are the cosine-separation and Shannon-effective-count measures defined in Section~\ref{sec:setup}; here $\bar{d}_{\cos}$ is computed on the \emph{true} component curves and $^1\!D$ on the posterior mixture weights.
-
-\subsection{Results}
-
-Figure~\ref{fig:resolvability} plots ${}^1\!D$ against $\bar{d}_{\cos}$ across all 90 fits. Three regimes are visible:
+\paragraph{Results.} Figure~\ref{fig:resolvability} plots ${}^1\!D$ against $\bar{d}_{\cos}$ across all 90 fits. Three regimes are visible:
 \begin{itemize}
     \item For $\bar{d}_{\cos} \lesssim 0.05$, both models collapse toward the trivial value: even when $K_{\text{true}} \geq 2$, the posterior cannot resolve more than $\approx 1.5$--$1.7$ effective components.
     \item Between $\bar{d}_{\cos} \approx 0.05$ and $0.3$, the recovered count rises sharply with separation: this is the resolvable transition region.
@@ -184,8 +187,10 @@ Figure~\ref{fig:resolvability} plots ${}^1\!D$ against $\bar{d}_{\cos}$ across a
 
 \paragraph{Practical implication.} The cosine $\approx 0.1$ figure is an empirical, model-dependent transition, not a sharp threshold: e.g.\ Mixture~$K=3$ on $K_{\text{true}}=3$ already recovers Shannon count $\approx 2.27$ at true cosine $0.058$. The qualitative picture is that separations below $\approx 0.05$ are reliably under-resolved and separations above $\approx 0.3$ are reliably recovered when $K$ matches, with sensitivity to model order and seed in between. We use these regimes as a vocabulary for Section~\ref{sec:real-resolvability}, not as a deployable rule.
 
-\section{Real-Data Benchmark}
+\section{Does It Transfer to Field Data?}
 \label{sec:real}
+
+Section~\ref{sec:recovery} establishes what recovery looks like when the model is correct and ground truth is known. We now ask how much of that survives on field data, leading with convergence---the property that most cleanly separates the synthetic and real regimes---before turning to the resolvability plane and, last, the predictive metrics.
 
 \subsection{Dataset and Organisation Selection}
 
@@ -208,11 +213,59 @@ Home \& Garden      & 1{,}642 & 5 & 0.80 & 2.1 \\
 \end{tabular}
 \end{table}
 
-\subsection{Predictive Performance}
+\subsection{The Convergence Gap}
+\label{sec:convergence-gap}
 
-Each organisation is fit with single-Hill, Mixture~$K=2$, and Mixture~$K=3$ under three seeds, giving 27 fits in total; inference and evaluation follow Section~\ref{sec:setup}.
+Each organisation is fit with single-Hill, Mixture~$K=2$, and Mixture~$K=3$ under three seeds, giving 27 fits in total; inference and evaluation follow Section~\ref{sec:setup}. Table~\ref{tab:real_convergence} summarises the rate at which each (organisation, model) cell passes the publication-ready convergence criterion (HMC diagnostics plus label-invariant and relabeled $\widehat{R}$) across the three seeds. Two patterns are stark.
 
-Table~\ref{tab:real_predictive} reports ELPD-LOO, holdout MAPE, holdout CRPS, and holdout 90\% coverage averaged across seeds. The key observation is that \emph{Mixture~$K=3$ has the highest estimated ELPD-LOO in every organisation}, with point gaps of $+222$ (beauty \& fitness), $+308$ (home \& garden), and $+275$ (toys \& hobbies) over the single-Hill baseline. Mixture~$K=2$ is intermediate. Both the magnitude and the ranking should be read alongside the paired-SE and PSIS reliability caveats below; we report them as estimates rather than as established improvements.
+\begin{table}[ht]
+\centering
+\caption{Per-cell convergence and component-summary diagnostics for the real-data benchmark. Columns are defined in Sections~\ref{sec:resolvability-measures} and~\ref{sec:real-resolvability}.}
+\label{tab:real_convergence}
+\small
+\begin{tabular}{llrrrrr}
+\toprule
+Organisation & Model & Pub.\ pass & $^1\!D_{\text{post}}$ & $K_{\text{act}}$ & $\hat k > 0.7$ (mean/max) & $\bar{d}_{\cos}^{\text{post}}$ \\
+\midrule
+Beauty \& Fitness  & Single Hill    & $0.67$ & $1.00$ & $1.00$ & $1.7$ / $3$  & --- \\
+                   & Mixture $K=2$ & $0.00$ & $1.26$ & $1.65$ & $15.0$ / $21$ & $0.46$ \\
+                   & Mixture $K=3$ & $0.00$ & $1.79$ & $2.17$ & $3.3$ / $10$  & $0.68$ \\
+\addlinespace
+Home \& Garden     & Single Hill    & $0.67$ & $1.00$ & $1.00$ & $0.7$ / $1$ & --- \\
+                   & Mixture $K=2$ & $0.33$ & $1.27$ & $1.94$ & $0.7$ / $1$ & $0.09$ \\
+                   & Mixture $K=3$ & $0.00$ & $1.66$ & $2.00$ & $1.7$ / $3$ & $0.12$ \\
+\addlinespace
+Toys \& Hobbies    & Single Hill    & $1.00$ & $1.00$ & $1.00$ & $2.7$ / $4$ & --- \\
+                   & Mixture $K=2$ & $0.67$ & $1.50$ & $2.00$ & $1.7$ / $2$ & $0.47$ \\
+                   & Mixture $K=3$ & $0.00$ & $2.72$ & $2.45$ & $3.3$ / $4$ & $0.29$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+First, \emph{Mixture~$K=3$ passes the publication-ready criterion in $0/9$ fits} on real data, despite the matched-$K$ synthetic fits passing in $5/5$ runs at matched $K=3$ (Section~\ref{sec:synthetic}). The Mixture~$K=3$ failures on real data are also not all the same kind: Home \& Garden chains hit the strict threshold only marginally, whereas Beauty \& Fitness and Toys \& Hobbies report max $\widehat{R}$ of $2.4$--$3.6$ and $1.8$, with tail ESS per chain of $1$--$6$ and $23$--$34$ respectively, and large numbers of max-tree-depth saturations. We therefore treat the three organisations' $K=3$ fits as qualitatively different failure modes rather than a single ``$0/9$'' bucket, and separate them on the resolvability plane in Section~\ref{sec:real-resolvability}. Second, the Shannon effective count $^1\!D_{\text{post}}$ is at most $2.72$ (Toys \& Hobbies $K=3$), while in two of the three organisations it stays below $1.8$, suggesting that the draws rarely use the full $K=3$ capacity in those cases.
+
+\subsection{Where Real Organisations Sit on the Resolvability Plane}
+\label{sec:real-resolvability}
+
+The synthetic resolvability study (Section~\ref{sec:resolvability}) characterises recovery as a function of \emph{true} cosine separation between component curves. Real data has no ground truth, but we can compute the same quantity from each fit's \emph{posterior} component summary: the mean pairwise cosine distance between the active Hill curves implied by the posterior means $(A_k, \lambda_k, n_k)$, on a fit-adaptive saturation grid. Plotting the recovered Shannon effective count against this posterior separation places the real organisations onto the same plane as the synthetic resolvability fits (Figure~\ref{fig:real_resolvability_overlay}), and lets us give the ``$0/9$'' convergence failures of Section~\ref{sec:convergence-gap} an organisation-by-organisation reading.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/fig_real_resolvability_overlay.png}
+\caption{Posterior Shannon effective component count versus posterior mean pairwise cosine distance. The 90 synthetic resolvability fits form a faint backdrop (grey filled = converged, open salmon = non-converged). The three real organisations (averaged across seeds, error bars $\pm 1$ s.d.) are foregrounded by colour, with marker shape encoding $K$ (square $=K{=}2$, triangle $=K{=}3$) and \emph{fill} encoding diagnostic trust: a filled marker had at least one publication-ready seed, a hollow marker none. A thin arrow joins each organisation's $K{=}2$ and $K{=}3$ fits. The shaded region right of the dashed line ($\bar{d}_{\cos}\approx 0.10$) is the resolvable side of the transition identified in Section~\ref{sec:resolvability}.}
+\label{fig:real_resolvability_overlay}
+\end{figure}
+
+Two important caveats apply to this overlay. First, the synthetic axis $\bar{d}_{\cos}$ is computed from the \emph{true} component curves while the real axis is computed from \emph{posterior-mean} curves; the latter inherits the chain-mixing problems documented in Table~\ref{tab:real_convergence} and should be read as a point estimate with substantial uncertainty for the failed fits. Second, the $\bar{d}_{\cos} \approx 0.10$ transition in Section~\ref{sec:resolvability} is an empirical, model-dependent boundary rather than a sharp identifiability threshold (e.g.\ Mixture~$K=3$ on the $K_{\text{true}}=3$ DGP recovers Shannon count $\approx 2.27$ at true cosine $0.058$).
+
+Subject to those caveats, the picture is heterogeneous across organisations. \emph{Home \& Garden} sits at the resolvability transition: its posterior cosine separation is $0.09$ under Mixture~$K=2$ and $0.12$ under Mixture~$K=3$, and the Shannon count $^1\!D_{\text{post}}$ stays at $1.27$ and $1.66$ respectively. Among the three organisations this fit reaches the convergence threshold most closely (publication-ready $1/3$ for $K=2$, with the $K=3$ fit failing only at the strict $\widehat{R} \le 1.01$ bar), so its position on the diagnostic plane is the one we are most confident reporting. \emph{Toys \& Hobbies} under Mixture~$K=3$ has a posterior separation of $0.29$ and a Shannon count of $2.72$, which is inside the resolvable region. However, all three Mixture~$K=3$ Toys \& Hobbies fits exhibit large numbers of max-tree-depth saturations and tail ESS per chain of $23$--$34$, so the posterior-mean curves driving the $0.29$ figure are themselves uncertain; we therefore present this case as consistent with three components rather than as evidence for them. \emph{Beauty \& Fitness} occupies the opposite extreme: the highest posterior separation of any organisation ($0.46$ for Mixture~$K=2$, $0.68$ for Mixture~$K=3$), but every fit fails publication-readiness with max $\widehat{R}$ in the range $2.4$--$3.6$ and tail ESS per chain of order $1$--$6$ for $K=3$. At that level the posterior summary itself is unreliable; the high posterior separation should be read as a flag for ``the model finds widely-separated modes'' rather than as a measurement of structure in the data.
+
+The combined reading is that the diagnostic picture is organisation-dependent. Home \& Garden lives at the resolvability boundary with reliable enough diagnostics that we can locate it on the plane. Toys \& Hobbies is consistent with three components subject to chain-mixing caveats. Beauty \& Fitness exhibits strong multi-modality in the posterior coupled with severe chain mixing failures; substantive claims about heterogeneity there should wait for a stronger inference setup or a heavier-tailed likelihood.
+
+\subsection{Predictive Density: An Exploratory Signal}
+\label{sec:real-predictive}
+
+Setting aside for a moment that none of the Mixture~$K=3$ fits is publication-ready (Section~\ref{sec:convergence-gap}), we now report what the holdout predictive metrics say. Because the $K=3$ numbers are drawn from non-converged inference, we treat this subsection as an exploratory signal rather than a benchmark result.
 
 \begin{table}[ht]
 \centering
@@ -237,24 +290,24 @@ Toys \& Hobbies    & Single Hill    & $-6{,}379 \pm 89$ & $36.4$ & $57.3$ & $0.9
 \end{tabular}
 \end{table}
 
-Two caveats apply to the magnitude of these gaps before any substantive reading.
+Table~\ref{tab:real_predictive} reports ELPD-LOO, holdout MAPE, holdout CRPS, and holdout 90\% coverage averaged across seeds. \emph{Mixture~$K=3$ has the highest estimated ELPD-LOO in every organisation}, with point gaps of $+222$ (beauty \& fitness), $+308$ (home \& garden), and $+275$ (toys \& hobbies) over the single-Hill baseline; Mixture~$K=2$ is intermediate. Two reliability caveats apply to the magnitude of these gaps before any substantive reading, and together with the non-convergence above they are why we treat the ranking as an estimate rather than an established improvement.
 
 \emph{Paired SE.} The standard errors in Table~\ref{tab:real_predictive} are per-fit PSIS-LOO standard errors of the individual ELPD point estimates, not the proper paired difference \texttt{se\_diff} between two models on the same observations \citep{vehtari2017loo}. Computing \texttt{se\_diff} requires pointwise log-likelihood matrices that we did not retain. As a coarse heuristic that is conservative only if the two models' pointwise scores are positively correlated, treating the two model ELPDs as independent gives $\sqrt{86^2+48^2} \approx 99$ (beauty \& fitness), $\sqrt{63^2+48^2} \approx 79$ (home \& garden), and $\sqrt{89^2+91^2} \approx 127$ (toys \& hobbies); the $K=3$ vs.\ single-Hill gaps are then roughly $2$--$4$ such heuristic SE in magnitude. This is not a paired \texttt{se\_diff} substitute---the direction of the bias depends on the (unknown) pointwise covariance---so we report it only to ground readers in the order of magnitude. The seed-level SDs in Figure~\ref{fig:real_elpd_bar} are Monte Carlo variability across NUTS reruns, not data-level uncertainty.
 
-\emph{PSIS reliability.} PSIS-LOO itself is reliable only when $\hat k_i \le 0.7$ for essentially all observations. Table~\ref{tab:real_convergence} reports the per-cell $\hat k_i > 0.7$ counts: Beauty \& Fitness Mixture~$K=2$ has $15$ such observations on average ($\max 21$), Beauty \& Fitness Mixture~$K=3$ has $3.3$ ($\max 10$), and other cells are in the single digits. The ELPD-LOO numbers for Beauty \& Fitness in particular should therefore be read as ELPD estimates from a partially-degraded PSIS approximation, not as clean predictive-density measurements; the relative ordering of models is informative but the absolute magnitudes are softer.
+\emph{PSIS reliability.} PSIS-LOO itself is reliable only when $\hat k_i \le 0.7$ for essentially all observations. The $\hat k_i > 0.7$ counts in Table~\ref{tab:real_convergence} show that Beauty \& Fitness Mixture~$K=2$ has $15$ such observations on average ($\max 21$), Beauty \& Fitness Mixture~$K=3$ has $3.3$ ($\max 10$), and other cells are in the single digits. The ELPD-LOO numbers for Beauty \& Fitness in particular should therefore be read as ELPD estimates from a partially-degraded PSIS approximation, not as clean predictive-density measurements; the relative ordering of models is informative but the absolute magnitudes are softer. The high Pareto-$k$ count for the Beauty \& Fitness Mixture~$K=2$ fit is consistent with a moderately misspecified model on data with influential outliers, and points to robustifying the likelihood as a useful next step.
 
 Figure~\ref{fig:real_elpd_bar} visualises the same comparison. The Mixture~$K=3$ advantage is consistent in sign across organisations, while the absolute scale of ELPD-LOO varies by an order of magnitude with series length and target variance.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/fig_real_elpd_bar.png}
-\caption{Real-data ELPD-LOO across the three organisations and three models. Higher is better. Error bars are $\pm 1$ standard deviation across three NUTS reruns at different random seeds and represent Monte Carlo variability of the sampler, not data-level uncertainty; in particular they should not be read as paired \texttt{se\_diff} between models. Mixture~$K=3$ has the highest estimated mean ELPD-LOO in every organisation, subject to the paired-SE and PSIS reliability caveats discussed after Table~\ref{tab:real_predictive}.}
+\caption{Real-data ELPD-LOO across the three organisations and three models. Higher is better. Error bars are $\pm 1$ standard deviation across three NUTS reruns at different random seeds and represent Monte Carlo variability of the sampler, not data-level uncertainty; in particular they should not be read as paired \texttt{se\_diff} between models. Mixture~$K=3$ has the highest estimated mean ELPD-LOO in every organisation, subject to the paired-SE and PSIS reliability caveats above.}
 \label{fig:real_elpd_bar}
 \end{figure}
 
 The relationship between ELPD and the other metrics is heterogeneous and \emph{not} uniformly favourable to the mixture. On \emph{home \& garden}, Mixture~$K=3$ has the best ELPD but Single Hill has the best MAPE ($26.0$) and CRPS ($25.0$); the mixture trades a small MAPE/CRPS regression for a sizeable ELPD gain. On \emph{toys \& hobbies}, ELPD and CRPS both improve under $K=3$, while MAPE is non-monotonic. On \emph{beauty \& fitness}, ELPD improves substantially but MAPE and CRPS \emph{deteriorate} for $K=3$, and the model remains visibly overconfident: 90\% coverage rises from $0.33$ (single) to $0.54$ ($K=3$) but stays well below the nominal level. The ELPD gain on this organisation therefore reflects a localised improvement in predictive density rather than a uniform predictive win; this should not be read as ``$K=3$ predicts better on beauty \& fitness''. We return to this in the discussion.
 
-To make concrete what the mixture is doing, Figure~\ref{fig:real_response_panel} shows the posterior response curves for the home \& garden organisation under all three models on a single representative seed (top row), together with the observed-versus-posterior-predictive time series for the same fits (bottom row). Single-Hill recovers one slowly-saturating curve. Mixture~$K=2$ resolves two components with weights $0.93$ and $0.07$, in which the small minority component carries a much higher saturation ceiling. Mixture~$K=3$ uses two active components with weights $0.84$ and $0.14$ and a third component that collapses to weight $0.02$ (labelled \emph{inactive} in the legend). The qualitative two-mode structure is robust to whether $K$ is set to 2 or 3, which is consistent with the posterior effective component count reported below. The predictive panels show that, despite these visibly different latent decompositions, all three models track the observed series comparably---the gains in Table~\ref{tab:real_predictive} are concentrated in predictive density rather than in any visually obvious difference in temporal fit.
+To make concrete what the mixture is doing, Figure~\ref{fig:real_response_panel} shows the posterior response curves for the home \& garden organisation under all three models on a single representative seed (top row), together with the observed-versus-posterior-predictive time series for the same fits (bottom row). Single-Hill recovers one slowly-saturating curve. Mixture~$K=2$ resolves two components with weights $0.93$ and $0.07$, in which the small minority component carries a much higher saturation ceiling. Mixture~$K=3$ uses two active components with weights $0.84$ and $0.14$ and a third component that collapses to weight $0.02$ (labelled \emph{inactive} in the legend). The qualitative two-mode structure is robust to whether $K$ is set to 2 or 3, which is consistent with the posterior effective component count reported in Table~\ref{tab:real_convergence}. The predictive panels show that, despite these visibly different latent decompositions, all three models track the observed series comparably---the gains in Table~\ref{tab:real_predictive} are concentrated in predictive density rather than in any visually obvious difference in temporal fit.
 
 \begin{figure}[ht]
 \centering
@@ -262,56 +315,6 @@ To make concrete what the mixture is doing, Figure~\ref{fig:real_response_panel}
 \caption{Home \& Garden (seed 0) under Single Hill, Mixture~$K=2$, and Mixture~$K=3$. \emph{Top row:} posterior latent response curves; shaded bands are 90\% posterior intervals and legend entries report posterior mixture weights $\hat\pi$ per component. The Mixture~$K=3$ third component is labelled \emph{inactive} because its weight collapses to $0.02$. The latent response is a model decomposition with no directly-observable target, so no data points are overlaid. \emph{Bottom row:} the corresponding observed series (black) against the posterior predictive mean and 90\% interval over time, with the train/test split marked; this is where the fit to data is read off, and shows that the three models track the observed series comparably despite their different latent decompositions.}
 \label{fig:real_response_panel}
 \end{figure}
-
-\subsection{Convergence on Real Data}
-
-Table~\ref{tab:real_convergence} summarises the rate at which each (organisation, model) cell passes the publication-ready convergence criterion (HMC diagnostics plus label-invariant and relabeled $\widehat{R}$) across the three seeds. Two patterns are stark.
-
-\begin{table}[ht]
-\centering
-\caption{Per-cell convergence and component-summary diagnostics for the real-data benchmark. Columns are defined in Sections~\ref{sec:setup} and~\ref{sec:real-resolvability}.}
-\label{tab:real_convergence}
-\small
-\begin{tabular}{llrrrrr}
-\toprule
-Organisation & Model & Pub.\ pass & $^1\!D_{\text{post}}$ & $K_{\text{act}}$ & $\hat k > 0.7$ (mean/max) & $\bar{d}_{\cos}^{\text{post}}$ \\
-\midrule
-Beauty \& Fitness  & Single Hill    & $0.67$ & $1.00$ & $1.00$ & $1.7$ / $3$  & --- \\
-                   & Mixture $K=2$ & $0.00$ & $1.26$ & $1.65$ & $15.0$ / $21$ & $0.46$ \\
-                   & Mixture $K=3$ & $0.00$ & $1.79$ & $2.17$ & $3.3$ / $10$  & $0.68$ \\
-\addlinespace
-Home \& Garden     & Single Hill    & $0.67$ & $1.00$ & $1.00$ & $0.7$ / $1$ & --- \\
-                   & Mixture $K=2$ & $0.33$ & $1.27$ & $1.94$ & $0.7$ / $1$ & $0.09$ \\
-                   & Mixture $K=3$ & $0.00$ & $1.66$ & $2.00$ & $1.7$ / $3$ & $0.12$ \\
-\addlinespace
-Toys \& Hobbies    & Single Hill    & $1.00$ & $1.00$ & $1.00$ & $2.7$ / $4$ & --- \\
-                   & Mixture $K=2$ & $0.67$ & $1.50$ & $2.00$ & $1.7$ / $2$ & $0.47$ \\
-                   & Mixture $K=3$ & $0.00$ & $2.72$ & $2.45$ & $3.3$ / $4$ & $0.29$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-First, \emph{Mixture~$K=3$ passes the publication-ready criterion in $0/9$ fits} on real data, despite the matched-$K$ synthetic fits passing in $5/5$ runs at matched $K=3$ (Section~\ref{sec:synthetic}). The Mixture~$K=3$ failures on real data are also not all the same kind: Home \& Garden chains hit the strict threshold only marginally, whereas Beauty \& Fitness and Toys \& Hobbies report max $\widehat{R}$ of $2.4$--$3.6$ and $1.8$, with tail ESS per chain of $1$--$6$ and $23$--$34$ respectively, and large numbers of max-tree-depth saturations. We therefore treat the three organisations' $K=3$ fits as qualitatively different failure modes rather than a single ``$0/9$'' bucket (Section~\ref{sec:real-resolvability}). Second, the Shannon effective count $^1\!D_{\text{post}}$ is at most $2.72$ (Toys \& Hobbies $K=3$), while in two of the three organisations it stays below $1.8$, suggesting that the draws rarely use the full $K=3$ capacity in those cases.
-
-The high Pareto-$k$ count for the beauty \& fitness Mixture~$K=2$ fit (15 observations on average) is consistent with a moderately misspecified model on data with influential outliers, and points to robustifying the likelihood as a useful next step.
-
-\subsection{Where Real Organisations Sit on the Resolvability Axis}
-\label{sec:real-resolvability}
-
-The synthetic resolvability study (Section~\ref{sec:resolvability}) characterises recovery as a function of \emph{true} cosine separation between component curves. Real data has no ground truth, but we can compute the same quantity from each fit's \emph{posterior} component summary: the mean pairwise cosine distance between the active Hill curves implied by the posterior means $(A_k, \lambda_k, n_k)$, on a fit-adaptive saturation grid. Plotting the recovered Shannon effective count against this posterior separation places the real organisations onto the same plane as the synthetic resolvability fits (Figure~\ref{fig:real_resolvability_overlay}).
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.95\textwidth]{figures/fig_real_resolvability_overlay.png}
-\caption{Posterior Shannon effective component count versus posterior mean pairwise cosine distance. The 90 synthetic resolvability fits form a faint backdrop (grey filled = converged, open salmon = non-converged). The three real organisations (averaged across seeds, error bars $\pm 1$ s.d.) are foregrounded by colour, with marker shape encoding $K$ (square $=K{=}2$, triangle $=K{=}3$) and \emph{fill} encoding diagnostic trust: a filled marker had at least one publication-ready seed, a hollow marker none. A thin arrow joins each organisation's $K{=}2$ and $K{=}3$ fits. The shaded region right of the dashed line ($\bar{d}_{\cos}\approx 0.10$) is the resolvable side of the transition identified in Section~\ref{sec:resolvability}.}
-\label{fig:real_resolvability_overlay}
-\end{figure}
-
-Two important caveats apply to this overlay. First, the synthetic axis $\bar{d}_{\cos}$ is computed from the \emph{true} component curves while the real axis is computed from \emph{posterior-mean} curves; the latter inherits the chain-mixing problems documented in Table~\ref{tab:real_convergence} and should be read as a point estimate with substantial uncertainty for the failed fits. Second, the $\bar{d}_{\cos} \approx 0.10$ transition in Section~\ref{sec:resolvability} is an empirical, model-dependent boundary rather than a sharp identifiability threshold (e.g.\ Mixture~$K=3$ on the $K_{\text{true}}=3$ DGP recovers Shannon count $\approx 2.27$ at true cosine $0.058$).
-
-Subject to those caveats, the picture is heterogeneous across organisations. \emph{Home \& Garden} sits at the resolvability transition: its posterior cosine separation is $0.09$ under Mixture~$K=2$ and $0.12$ under Mixture~$K=3$, and the Shannon count $^1\!D_{\text{post}}$ stays at $1.27$ and $1.66$ respectively. Among the three organisations this fit reaches the convergence threshold most closely (publication-ready $1/3$ for $K=2$, with the $K=3$ fit failing only at the strict $\widehat{R} \le 1.01$ bar), so its position on the diagnostic plane is the one we are most confident reporting. \emph{Toys \& Hobbies} under Mixture~$K=3$ has a posterior separation of $0.29$ and a Shannon count of $2.72$, which is inside the resolvable region. However, all three Mixture~$K=3$ Toys \& Hobbies fits exhibit large numbers of max-tree-depth saturations and tail ESS per chain of $23$--$34$, so the posterior-mean curves driving the $0.29$ figure are themselves uncertain; we therefore present this case as consistent with three components rather than as evidence for them. \emph{Beauty \& Fitness} occupies the opposite extreme: the highest posterior separation of any organisation ($0.46$ for Mixture~$K=2$, $0.68$ for Mixture~$K=3$), but every fit fails publication-readiness with max $\widehat{R}$ in the range $2.4$--$3.6$ and tail ESS per chain of order $1$--$6$ for $K=3$. At that level the posterior summary itself is unreliable; the high posterior separation should be read as a flag for ``the model finds widely-separated modes'' rather than as a measurement of structure in the data.
-
-The combined reading is that the diagnostic picture is organisation-dependent. Home \& Garden lives at the resolvability boundary with reliable enough diagnostics that we can locate it on the plane. Toys \& Hobbies is consistent with three components subject to chain-mixing caveats. Beauty \& Fitness exhibits strong multi-modality in the posterior coupled with severe chain mixing failures; substantive claims about heterogeneity there should wait for a stronger inference setup or a heavier-tailed likelihood.
 
 \section{Discussion: What Worked, What Did Not, What We Did Not Test}
 \label{sec:discussion}
@@ -322,9 +325,9 @@ We organise the discussion around three honest categories so the reader can sepa
 
 \paragraph{Recovery on the matched DGP.} When the synthetic DGP is itself a Hill mixture, the model recovers it: latent-mean nRMSE roughly halves under $K=2$ and shrinks by $\approx 2.4\times$ under matched $K=3$, with ELPD gains of $+50$ and $+45$ respectively over single-Hill (Section~\ref{sec:synthetic}).
 
-\paragraph{Predictive density on real data, with caveats.} Mixture~$K=3$ has the highest estimated ELPD-LOO in every real organisation, with point gaps $+222$ to $+308$ ($\approx 2$--$4$ coarse heuristic SE). These are reported as estimates rather than as established improvements: (i)~the proper paired $\mathtt{se\_diff}$ could not be recomputed, (ii)~Beauty \& Fitness has degraded PSIS reliability, and (iii)~\emph{none of the nine real-data Mixture~$K=3$ fits is publication-ready}, so the K=3 ELPD numbers come from non-converged inference and should be treated as an exploratory signal rather than a benchmark result (Section~\ref{sec:real}).
+\paragraph{The diagnostic toolkit as a working tool.} The cosine separation / Shannon count axis (Section~\ref{sec:resolvability}) gives a concrete vocabulary for placing each real organisation on a diagnostic plane (Section~\ref{sec:real-resolvability}), and the three-bucket label-invariant diagnostic (Section~\ref{sec:identifiability}) lets us diagnose mixture posteriors in the same workflow as single-Hill. Together they turn the blunt ``$0/9$ real $K=3$ fits converge'' statistic into an organisation-by-organisation reading.
 
-\paragraph{Resolvability and label-invariant diagnostics as working tools.} The cosine separation / Shannon count axis (Section~\ref{sec:resolvability}) gives a concrete vocabulary for placing each real organisation on a diagnostic plane (Section~\ref{sec:real-resolvability}), and the three-bucket label-invariant diagnostic (Section~\ref{sec:identifiability}) lets us diagnose mixture posteriors in the same workflow as single-Hill.
+\paragraph{Predictive density on real data, with caveats.} Mixture~$K=3$ has the highest estimated ELPD-LOO in every real organisation, with point gaps $+222$ to $+308$ ($\approx 2$--$4$ coarse heuristic SE). These are reported as estimates rather than as established improvements: (i)~the proper paired $\mathtt{se\_diff}$ could not be recomputed, (ii)~Beauty \& Fitness has degraded PSIS reliability, and (iii)~\emph{none of the nine real-data Mixture~$K=3$ fits is publication-ready}, so the $K=3$ ELPD numbers come from non-converged inference and should be treated as an exploratory signal rather than a benchmark result (Section~\ref{sec:real-predictive}).
 
 \subsection{What did not transfer}
 
@@ -332,7 +335,7 @@ We organise the discussion around three honest categories so the reader can sepa
 
 \paragraph{Predictive density does not imply predictive accuracy.} Beauty \& Fitness ELPD-LOO improves by $+222$ under Mixture~$K=3$ while holdout MAPE and CRPS \emph{deteriorate}: the likelihood widens around the data more than the mean moves toward it, which is consistent with a Gaussian-mixture absorbing multi-modal residual structure rather than improving point prediction.
 
-\paragraph{Influential observations and non-converging fits.} Beauty \& Fitness has up to $21$ LOO observations with $\hat k_i > 0.7$ (Mixture~$K=2$), degrading PSIS reliability. Mixture~$K=3$ on Toys \& Hobbies reports tail ESS/chain of $23$--$34$ and on Beauty \& Fitness max $\widehat{R}$ reaches $2.4$--$3.6$ with tail ESS/chain $1$--$6$. These fits are described and placed on the resolvability plane, but their posterior-mean component summaries are not reported as reliable measurements.
+\paragraph{Influential observations and non-converging fits.} The failed real-data fits are described and placed on the resolvability plane in Section~\ref{sec:real-resolvability}, but their posterior-mean component summaries are not reported as reliable measurements: Beauty \& Fitness has up to $21$ LOO observations with $\hat k_i > 0.7$ (Mixture~$K=2$), and Mixture~$K=3$ reports tail ESS/chain of $23$--$34$ on Toys \& Hobbies and max $\widehat{R}$ of $2.4$--$3.6$ with tail ESS/chain $1$--$6$ on Beauty \& Fitness.
 
 \subsection{What we did not test}
 
@@ -344,7 +347,7 @@ These are the obvious next questions we did not attempt and have therefore not r
 
 \paragraph{Stronger inference for non-converging fits.} Mixture~$K=3$ on Beauty \& Fitness and Toys \& Hobbies might converge with longer chains, tempering, alternative initialisation, or hand-tuned mass matrices. We did not pursue this; the per-fit summaries on disk are from the configuration in Appendix~\ref{app:hyperparams} and nothing else.
 
-\paragraph{Paired LOO comparisons.} We report per-fit PSIS-LOO standard errors but did not retain the pointwise log-likelihood matrices needed to compute the proper paired $\mathtt{se\_diff}$ of \citet{vehtari2017loo}. The coarse independent-sum heuristic in Section~\ref{sec:real} is not a substitute, and is not a strict upper bound; we report it only for order-of-magnitude calibration.
+\paragraph{Paired LOO comparisons.} We report per-fit PSIS-LOO standard errors but did not retain the pointwise log-likelihood matrices needed to compute the proper paired $\mathtt{se\_diff}$ of \citet{vehtari2017loo}. The coarse independent-sum heuristic in Section~\ref{sec:real-predictive} is not a substitute, and is not a strict upper bound; we report it only for order-of-magnitude calibration.
 
 \paragraph{Causal identification.} As \citet{dew2024mmm} argue, the joint identification of nonlinear and time-varying effects from observational time series is unresolved. Our mixture extension does not address this; it only changes the assumed saturation family. Practitioners using this model for budget decisions should triangulate against geo-experiments or incrementality tests.
 
@@ -379,7 +382,7 @@ Random seeds are fixed and recorded in each per-fit JSON. Sampler settings used 
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented a Bayesian predictive mixture of Hill saturation functions for MMM, with a label-invariant diagnostic workflow, on a controlled single-aggregated-spend version of the problem. Three findings travel together. (i)~Mixture-of-Hill has higher estimated ELPD-LOO than single-Hill on every real organisation, but the gaps are reported as estimates subject to paired-SE and PSIS reliability caveats, and they do not translate into uniform MAPE/CRPS improvements (Beauty \& Fitness deteriorates). (ii)~The component-resolvability axis gives an empirical, model-dependent transition near cosine $\approx 0.10$, useful as a diagnostic vocabulary rather than a deployable rule. (iii)~The benchmark convergence threshold that $44/45$ synthetic fits clear fails uniformly for Mixture~$K=3$ on real data; we interpret this synthetic-to-real gap as a directly useful finding for practitioners rather than a weakness to sand away.
+We studied a Bayesian predictive mixture of Hill saturation functions for MMM on a controlled single-aggregated-spend problem, and organised the investigation around a diagnostic toolkit rather than a single headline number. Three findings travel together. (i)~The benchmark convergence threshold that $44/45$ synthetic fits clear fails uniformly for Mixture~$K=3$ on real data ($0/9$ publication-ready); re-using the component-resolvability axis on the real posteriors turns this synthetic-to-real gap into an organisation-dependent diagnosis---Home \& Garden at the boundary, Toys \& Hobbies consistent with three components subject to caveats, Beauty \& Fitness strongly multi-modal---rather than a single failure statistic, which we regard as the paper's most directly useful result for practitioners. (ii)~The toolkit itself, the resolvability axis and the label-invariant convergence workflow, is reusable: it locates an empirical, model-dependent recovery transition near cosine $\approx 0.10$ on synthetic data and places real organisations on the same plane. (iii)~Mixture-of-Hill does attain higher estimated ELPD-LOO than single-Hill on every real organisation, but subject to paired-SE and PSIS reliability caveats and drawn from non-converged inference, so we report it as an exploratory signal that does not translate into uniform MAPE/CRPS improvements (Beauty \& Fitness deteriorates).
 
 \bibliographystyle{plainnat}
 \bibliography{references}

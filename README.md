@@ -24,13 +24,13 @@ The Discussion section is explicitly structured as **What worked / What did not 
 
 | Paper section | Implementation |
 |---|---|
-| Model Specification (§3) | `../src/hill_mixture_mmm/models.py` |
-| Data generation (§5, Appendix C) | `../src/hill_mixture_mmm/data.py` |
-| Inference and diagnostics (§3.1, §4) | `../src/hill_mixture_mmm/inference.py` |
-| Synthetic benchmark (§5) | `../scripts/run_benchmark.py` |
-| Component resolvability (§6) | `../scripts/run_component_resolvability_sweep.py` |
-| Real-data benchmark (§7) | `../scripts/run_real_data_validation.py`, `../scripts/summarize_real_benchmark.py` |
-| Posterior cosine separation (§7.4) | `../scripts/compute_posterior_separation.py` |
+| Model & diagnostic toolkit (§3) | `../src/hill_mixture_mmm/models.py` |
+| Data generation (§5.1, Appendix C) | `../src/hill_mixture_mmm/data.py` |
+| Inference and diagnostics (§3.2, §4) | `../src/hill_mixture_mmm/inference.py` |
+| Synthetic recovery benchmark (§5.1) | `../scripts/run_benchmark.py` |
+| Component resolvability (§5.2) | `../scripts/run_component_resolvability_sweep.py` |
+| Real-data benchmark (§6) | `../scripts/run_real_data_validation.py`, `../scripts/summarize_real_benchmark.py` |
+| Posterior cosine separation (§6.3) | `../scripts/compute_posterior_separation.py` |
 | Paper figures | `../src/hill_mixture_mmm/paper_figures.py`, `../scripts/build_real_paper_figures.py` |
 
 ## Files
